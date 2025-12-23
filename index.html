@@ -1,0 +1,570 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ethernova (NOVA) | GPU Mining EVM Chain</title>
+  <meta name="description" content="Ethernova (NOVA) is a CoreGeth-based, EVM-compatible chain reviving community-driven GPU mining with an open DeFi and NFT ecosystem.">
+  <meta name="keywords" content="Ethernova, NOVA, EVM, GPU mining, Ethhash, CoreGeth, blockchain, DeFi, NFT">
+  <meta name="theme-color" content="#0b0f2d">
+  <meta property="og:title" content="Ethernova (NOVA)">
+  <meta property="og:description" content="Let's Make Great GPU Mining Again!!! EVM-compatible, CoreGeth-based chain with GPU mining at its core.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://explorer.207-180-230-125.sslip.io">
+  <meta property="og:site_name" content="Ethernova">
+  <meta property="og:image" content="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='630'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%23070b1f'/%3E%3Cstop offset='100%25' stop-color='%23250f45'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='1200' height='630' fill='url(%23g)'/%3E%3Ccircle cx='860' cy='250' r='260' fill='%2384e3ff' fill-opacity='0.16'/%3E%3Ccircle cx='360' cy='380' r='320' fill='%23a66bff' fill-opacity='0.18'/%3E%3Ctext x='80' y='330' fill='%23ffffff' font-family='Space Grotesk, Arial' font-size='74' font-weight='700'%3EETHERNOVA%3C/text%3E%3Ctext x='80' y='410' fill='%23b9c6ff' font-family='Space Grotesk, Arial' font-size='32'%3ELet%27s Make Great GPU Mining Again!!!%3C/text%3E%3C/svg%3E">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Ethernova (NOVA)">
+  <meta name="twitter:description" content="Let's Make Great GPU Mining Again!!! EVM-compatible, CoreGeth-based chain with GPU mining at its core.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#hero">Skip to content</a>
+  <canvas id="starfield" aria-hidden="true"></canvas>
+  <div class="nebula" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <div class="nav-inner">
+      <a class="logo" href="#hero" data-scroll>
+        ETHERNOVA <span class="badge">NOVA</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-controls="primary-nav" aria-expanded="false">Menu</button>
+      <nav id="primary-nav" class="nav-links" aria-label="Primary">
+        <a href="#vision" data-scroll>Vision</a>
+        <a href="#network" data-scroll>Network</a>
+        <a href="#mining" data-scroll>Mining</a>
+        <a href="#rpc" data-scroll>RPC</a>
+        <a href="#wallet" data-scroll>Wallet</a>
+        <a href="#upgrade" data-scroll>Upgrade</a>
+        <a href="#roadmap" data-scroll>Roadmap</a>
+        <a href="#leadership" data-scroll>Leadership</a>
+        <a href="#community" data-scroll>Community</a>
+        <a href="#faq" data-scroll>FAQ</a>
+      </nav>
+      <a class="btn ghost nav-cta" href="https://t.me/EthernovaChain" target="_blank" rel="noopener">Join Telegram</a>
+    </div>
+  </header>
+
+  <main>
+    <section id="hero" class="hero">
+      <div class="container hero-grid">
+        <div class="hero-text">
+          <p class="eyebrow">EVM + GPU Mining</p>
+          <h1>Ignite the supernova.</h1>
+          <p class="tagline">Let's Make Great GPU Mining Again!!!</p>
+          <p class="lead">Ethernova (NOVA) is a CoreGeth-based, EVM-compatible chain built for miners, builders, and explorers of the next DeFi frontier.</p>
+          <div class="cta-row">
+            <a class="btn primary" href="https://explorer.207-180-230-125.sslip.io" target="_blank" rel="noopener">Open Explorer</a>
+            <a class="btn secondary" href="https://rpc.207-180-230-125.sslip.io" target="_blank" rel="noopener">RPC Endpoint</a>
+            <a class="btn ghost" href="#mining" data-scroll>Start Mining</a>
+            <a class="btn ghost" href="https://t.me/EthernovaChain" target="_blank" rel="noopener">Join Telegram</a>
+          </div>
+          <div class="status-strip glass-card">
+            <div class="status-item">✅ Chain is producing blocks</div>
+            <div class="status-item">✅ RPC responds correctly</div>
+            <div class="status-item">⚠️ P2P peers in bootstrap phase</div>
+          </div>
+        </div>
+        <div class="hero-art">
+          <div class="glass-card hero-card glow-border">
+            <h3>Core Network</h3>
+            <p>Chain ID <strong>77777</strong> on Ethhash with NOVA at the center.</p>
+            <div class="mini-list">
+              <div>
+                <span>Algo</span>
+                <strong>Ethhash</strong>
+              </div>
+              <div>
+                <span>Ticker</span>
+                <strong>NOVA</strong>
+              </div>
+              <div>
+                <span>Pool ID</span>
+                <strong>nova1</strong>
+              </div>
+            </div>
+          </div>
+          <div class="glass-card hero-card">
+            <h3>Temp Endpoints</h3>
+            <p>Domain is suspended. Use these temporary links for now.</p>
+            <div class="stack">
+              <div class="info-row">
+                <span class="label">Explorer</span>
+                <div class="value-group">
+                  <code>https://explorer.207-180-230-125.sslip.io</code>
+                  <button class="copy-btn" type="button" data-copy="https://explorer.207-180-230-125.sslip.io" aria-label="Copy explorer endpoint">Copy</button>
+                </div>
+              </div>
+              <div class="info-row">
+                <span class="label">RPC</span>
+                <div class="value-group">
+                  <code>https://rpc.207-180-230-125.sslip.io</code>
+                  <button class="copy-btn" type="button" data-copy="https://rpc.207-180-230-125.sslip.io" aria-label="Copy RPC endpoint">Copy</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="vision" class="section">
+      <div class="container">
+        <div class="section-header">
+          <h2>Vision</h2>
+          <p>Bringing back the golden age of profitable, community-driven GPU mining - and powering it with a full EVM ecosystem.</p>
+        </div>
+        <div class="grid-2">
+          <div class="glass-card">
+            <h3>EVM Ecosystem</h3>
+            <p>Build NFTs, tokens (ERC-20 style), DeFi apps (DEX, liquidity, farming, lending), and smart contracts on a miner-first chain.</p>
+          </div>
+          <div class="glass-card">
+            <h3>Community First</h3>
+            <p>NOVA is focused on miners and builders who want transparency, predictable economics, and a chain that values GPU accessibility.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="about" class="section">
+      <div class="container">
+        <div class="section-header">
+          <h2>What is Ethernova?</h2>
+          <p>Ethernova is CoreGeth-based, fully EVM-compatible, and mining friendly with excellent Windows support.</p>
+        </div>
+        <div class="glass-card">
+          <p>It is engineered for stable mining operations, rapid onboarding for developers, and a community-driven network secured by GPUs.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="network" class="section">
+      <div class="container">
+        <div class="section-header">
+          <h2>Network Info</h2>
+          <p>Everything you need to connect to NOVA mainnet.</p>
+        </div>
+        <div class="glass-card stack">
+          <div class="info-row">
+            <span class="label">Chain ID</span>
+            <div class="value-group">
+              <code>77777</code>
+              <button class="copy-btn" type="button" data-copy="77777" aria-label="Copy Chain ID">Copy</button>
+            </div>
+          </div>
+          <div class="info-row">
+            <span class="label">Ticker</span>
+            <div class="value-group">
+              <code>NOVA</code>
+              <button class="copy-btn" type="button" data-copy="NOVA" aria-label="Copy ticker">Copy</button>
+            </div>
+          </div>
+          <div class="info-row">
+            <span class="label">Algo</span>
+            <div class="value-group">
+              <code>Ethhash</code>
+              <button class="copy-btn" type="button" data-copy="Ethhash" aria-label="Copy algorithm">Copy</button>
+            </div>
+          </div>
+          <div class="info-row">
+            <span class="label">Pool ID</span>
+            <div class="value-group">
+              <code>nova1</code>
+              <button class="copy-btn" type="button" data-copy="nova1" aria-label="Copy pool ID">Copy</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="mining" class="section">
+      <div class="container">
+        <div class="section-header">
+          <h2>Mining Pool</h2>
+          <p>Connect your miner to the NOVA pool with the details below.</p>
+        </div>
+        <div class="grid-2">
+          <div class="glass-card stack">
+            <div class="info-row">
+              <span class="label">Pool Dashboard</span>
+              <div class="value-group">
+                <code>http://89.117.150.207/</code>
+                <button class="copy-btn" type="button" data-copy="http://89.117.150.207/" aria-label="Copy pool dashboard URL">Copy</button>
+              </div>
+            </div>
+            <div class="info-row">
+              <span class="label">Stratum</span>
+              <div class="value-group">
+                <code>stratum+tcp://89.117.150.207:4073</code>
+                <button class="copy-btn" type="button" data-copy="stratum+tcp://89.117.150.207:4073" aria-label="Copy stratum endpoint">Copy</button>
+              </div>
+            </div>
+            <div class="info-row">
+              <span class="label">Pool Fee</span>
+              <div class="value-group">
+                <code>1%</code>
+                <button class="copy-btn" type="button" data-copy="1%" aria-label="Copy pool fee">Copy</button>
+              </div>
+            </div>
+            <div class="info-row">
+              <span class="label">Minimum Payout</span>
+              <div class="value-group">
+                <code>0.01 NOVA</code>
+                <button class="copy-btn" type="button" data-copy="0.01 NOVA" aria-label="Copy minimum payout">Copy</button>
+              </div>
+            </div>
+          </div>
+          <div class="glass-card stack">
+            <div class="info-row">
+              <span class="label">Pool ID</span>
+              <div class="value-group">
+                <code>nova1</code>
+                <button class="copy-btn" type="button" data-copy="nova1" aria-label="Copy pool ID">Copy</button>
+              </div>
+            </div>
+            <div class="info-row">
+              <span class="label">Wallet Format</span>
+              <div class="value-group">
+                <code>0xYOUR_WALLET.rig1</code>
+                <button class="copy-btn" type="button" data-copy="0xYOUR_WALLET.rig1" aria-label="Copy wallet format">Copy</button>
+              </div>
+            </div>
+            <div class="info-row">
+              <span class="label">Password</span>
+              <div class="value-group">
+                <code>x</code>
+                <button class="copy-btn" type="button" data-copy="x" aria-label="Copy password">Copy</button>
+              </div>
+            </div>
+            <div class="info-row">
+              <span class="label">Pool Status</span>
+              <div class="value-group">
+                <code>LIVE</code>
+                <button class="copy-btn" type="button" data-copy="LIVE" aria-label="Copy pool status">Copy</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="temporary-links" class="alert-banner">
+      <div class="container alert-inner">
+        <div>
+          <h2>TEMPORARY LINKS</h2>
+          <p>Main domain is suspended. Please use the temporary explorer and RPC endpoints below. We will announce the new official domain soon.</p>
+        </div>
+        <div class="alert-actions">
+          <a class="btn primary" href="https://explorer.207-180-230-125.sslip.io" target="_blank" rel="noopener">Open Explorer</a>
+          <a class="btn secondary" href="https://rpc.207-180-230-125.sslip.io" target="_blank" rel="noopener">RPC Endpoint</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="rpc" class="section">
+      <div class="container">
+        <div class="section-header">
+          <h2>RPC + Explorer</h2>
+          <p>Temporary endpoints while the main domain is suspended.</p>
+        </div>
+        <div class="grid-2">
+          <div class="glass-card stack">
+            <h3>Explorer</h3>
+            <div class="info-row">
+              <span class="label">URL</span>
+              <div class="value-group">
+                <code>https://explorer.207-180-230-125.sslip.io</code>
+                <button class="copy-btn" type="button" data-copy="https://explorer.207-180-230-125.sslip.io" aria-label="Copy explorer URL">Copy</button>
+              </div>
+            </div>
+            <p class="muted">Browse blocks, transactions, and wallets in real time.</p>
+          </div>
+          <div class="glass-card stack">
+            <h3>RPC</h3>
+            <div class="info-row">
+              <span class="label">URL</span>
+              <div class="value-group">
+                <code>https://rpc.207-180-230-125.sslip.io</code>
+                <button class="copy-btn" type="button" data-copy="https://rpc.207-180-230-125.sslip.io" aria-label="Copy RPC URL">Copy</button>
+              </div>
+            </div>
+            <p class="muted">RPC responds correctly for balance, txs, and gas calls.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="bootnodes" class="section">
+      <div class="container">
+        <div class="section-header">
+          <h2>Bootnodes</h2>
+          <p>Use these enodes to connect your peers during bootstrap.</p>
+        </div>
+        <div class="glass-card stack">
+          <div class="info-row">
+            <span class="label">Bootnode 1</span>
+            <div class="value-group">
+              <code>enode://e2d5a4eef8287fe806c54d48700383afde46af1cdbaf09d0c6488c3030db96b0344a6334711d60de79e52b2faa63fc50cc48013aa24ea26a489e0134d5ac45da@89.117.150.207:30303</code>
+              <button class="copy-btn" type="button" data-copy="enode://e2d5a4eef8287fe806c54d48700383afde46af1cdbaf09d0c6488c3030db96b0344a6334711d60de79e52b2faa63fc50cc48013aa24ea26a489e0134d5ac45da@89.117.150.207:30303" aria-label="Copy bootnode 1">Copy</button>
+            </div>
+          </div>
+          <div class="info-row">
+            <span class="label">Bootnode 2</span>
+            <div class="value-group">
+              <code>enode://c40a94cb7e7f46de57dd4f030678b08ff0492af27aa75af006baf416050b1d1896a084d4bbb6e04a784356ad8c5022c389430c27b1b90c8a528e260050980047@207.180.230.125:30303</code>
+              <button class="copy-btn" type="button" data-copy="enode://c40a94cb7e7f46de57dd4f030678b08ff0492af27aa75af006baf416050b1d1896a084d4bbb6e04a784356ad8c5022c389430c27b1b90c8a528e260050980047@207.180.230.125:30303" aria-label="Copy bootnode 2">Copy</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="wallet" class="section">
+      <div class="container">
+        <div class="section-header">
+          <h2>Install / Connect (MetaMask)</h2>
+          <p>Add the Ethernova network to MetaMask using the exact fields below.</p>
+        </div>
+        <div class="grid-2">
+          <div class="glass-card">
+            <h3>MetaMask Config</h3>
+            <div class="stack">
+              <div class="info-row">
+                <span class="label">Network Name</span>
+                <div class="value-group">
+                  <code>Ethernova</code>
+                  <button class="copy-btn" type="button" data-copy="Ethernova" aria-label="Copy network name">Copy</button>
+                </div>
+              </div>
+              <div class="info-row">
+                <span class="label">New RPC URL</span>
+                <div class="value-group">
+                  <code>https://rpc.207-180-230-125.sslip.io</code>
+                  <button class="copy-btn" type="button" data-copy="https://rpc.207-180-230-125.sslip.io" aria-label="Copy new RPC URL">Copy</button>
+                </div>
+              </div>
+              <div class="info-row">
+                <span class="label">Chain ID</span>
+                <div class="value-group">
+                  <code>77777</code>
+                  <button class="copy-btn" type="button" data-copy="77777" aria-label="Copy chain ID">Copy</button>
+                </div>
+              </div>
+              <div class="info-row">
+                <span class="label">Currency Symbol</span>
+                <div class="value-group">
+                  <code>NOVA</code>
+                  <button class="copy-btn" type="button" data-copy="NOVA" aria-label="Copy currency symbol">Copy</button>
+                </div>
+              </div>
+              <div class="info-row">
+                <span class="label">Block Explorer URL</span>
+                <div class="value-group">
+                  <code>https://explorer.207-180-230-125.sslip.io</code>
+                  <button class="copy-btn" type="button" data-copy="https://explorer.207-180-230-125.sslip.io" aria-label="Copy block explorer URL">Copy</button>
+                </div>
+              </div>
+            </div>
+            <button class="btn primary full" type="button" data-copy-metamask>Copy MetaMask Config</button>
+          </div>
+          <div class="glass-card">
+            <h3>MetaMask Steps</h3>
+            <div class="stack">
+              <div>
+                <h4>PC</h4>
+                <ol class="steps">
+                  <li>Open MetaMask and select Networks.</li>
+                  <li>Choose Add network and select Add a network manually.</li>
+                  <li>Enter the exact fields from the config panel.</li>
+                  <li>Save and switch to Ethernova.</li>
+                </ol>
+              </div>
+              <div>
+                <h4>Mobile</h4>
+                <ol class="steps">
+                  <li>Open MetaMask and tap the network selector.</li>
+                  <li>Select Add network and choose Manual input.</li>
+                  <li>Paste the same fields and save.</li>
+                  <li>Confirm the chain ID is 77777.</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="upgrade" class="section">
+      <div class="container">
+        <div class="section-header">
+          <h2>Mainnet Upgrade (NO Chain Reset)</h2>
+          <p>Upgrade with the scripts below. Do not reset your chain.</p>
+        </div>
+        <div class="grid-2">
+          <div class="glass-card">
+            <h3>Windows</h3>
+            <pre><code>scripts\apply-upgrade-mainnet.bat</code></pre>
+          </div>
+          <div class="glass-card">
+            <h3>Linux</h3>
+            <pre><code>./scripts/apply-upgrade-mainnet.sh</code></pre>
+          </div>
+        </div>
+        <div class="glass-card stack">
+          <h3>Behind the scenes</h3>
+          <pre><code>ethernova --datadir &lt;your-datadir&gt; init genesis-upgrade-60000.json</code></pre>
+          <div class="warning">
+            <strong>Warning:</strong> Do NOT replace the genesis inside your datadir. Init updates the stored chain config while preserving the genesis hash.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="roadmap" class="section">
+      <div class="container">
+        <div class="section-header">
+          <h2>Roadmap</h2>
+          <p>Short, focused milestones to harden the chain and grow the ecosystem.</p>
+        </div>
+        <div class="grid-3">
+          <div class="glass-card">
+            <h3>Phase 1: Stabilize</h3>
+            <p>Expand public nodes, harden P2P connectivity, and onboard more pool operators.</p>
+          </div>
+          <div class="glass-card">
+            <h3>Phase 2: Builders</h3>
+            <p>Launch docs, tooling, and starter smart contracts for DeFi and NFT builders.</p>
+          </div>
+          <div class="glass-card">
+            <h3>Phase 3: Growth</h3>
+            <p>Scale infrastructure, launch community grants, and push multi-region redundancy.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="leadership" class="section">
+      <div class="container">
+        <div class="section-head">
+          <h2>Leadership</h2>
+          <p class="muted">Building a mineable EVM ecosystem with real utility - not empty blocks.</p>
+        </div>
+        <div class="grid two">
+          <article class="card leader-card">
+            <div class="leader-badge">Core Team</div>
+            <h3>Project Lead</h3>
+            <p class="muted">
+              Ethernova is a community-driven EVM network built to revive profitable GPU mining and expand into a real on-chain economy.
+              The core team focuses on stable infrastructure, mining-first incentives, and simple node operations (especially on Windows) -
+              so builders can ship NFTs, tokens, and DeFi on a chain that actually gets used.
+            </p>
+            <div class="leader-quote">
+              <span class="quote-mark">&ldquo;</span>
+              <p>Miners are not an afterthought - they are the heartbeat.</p>
+            </div>
+            <div class="leader-links">
+              <a class="btn small" href="https://t.me/EthernovaChain" target="_blank" rel="noopener">Join Telegram</a>
+            </div>
+          </article>
+          <article class="card">
+            <h3>We are looking for</h3>
+            <ul class="clean-list">
+              <li>🛰️ Node operators (public peers / bootnodes)</li>
+              <li>⛏️ Pool operators</li>
+              <li>🧠 Builders (NFTs, tokens, DeFi, tooling)</li>
+            </ul>
+            <p class="muted">If you can run infrastructure or ship dApps, you are the kind of person this chain was built for.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="community" class="section">
+      <div class="container">
+        <div class="section-header">
+          <h2>Community</h2>
+          <p>Join the builders and operators growing the NOVA ecosystem.</p>
+        </div>
+        <div class="grid-3">
+          <div class="glass-card">
+            <h3>Telegram</h3>
+            <p>Get announcements, support, and updates straight from the team.</p>
+            <a class="btn secondary" href="https://t.me/EthernovaChain" target="_blank" rel="noopener">Join Telegram</a>
+          </div>
+          <div class="glass-card">
+            <h3>Social Channels</h3>
+            <p>Track updates, community alerts, and core development progress.</p>
+            <div class="cta-row">
+              <a class="btn ghost" href="https://x.com/EthernovaCoin" target="_blank" rel="noopener">Follow on X</a>
+              <a class="btn ghost" href="https://discord.gg/MYRzWpdcS2" target="_blank" rel="noopener">Join Discord</a>
+              <a class="btn ghost" href="https://github.com/EthernovaDev/ethernova-coregeth" target="_blank" rel="noopener">GitHub (TBD)</a>
+            </div>
+          </div>
+          <div class="glass-card">
+            <h3>Call for Operators</h3>
+            <p>We are actively seeking public node operators, pool operators, and builders to help bootstrap peers and expand the network.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="faq" class="section">
+      <div class="container">
+        <div class="section-header">
+          <h2>FAQ / Troubleshooting</h2>
+          <p>Quick fixes for the most common connection errors.</p>
+        </div>
+        <div class="glass-card">
+          <ul class="faq-list">
+            <li><strong>"Could not fetch chain ID" / "RPC error"</strong> - Verify the RPC URL exactly and try a different network (Wi-Fi vs mobile data).</li>
+            <li><strong>Wrong Chain ID</strong> - Chain ID must be 77777.</li>
+            <li><strong>Explorer does not load</strong> - Confirm the exact explorer URL is https://explorer.207-180-230-125.sslip.io.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <div class="logo">ETHERNOVA <span class="badge">NOVA</span></div>
+        <p class="muted">Ethernova is a community-driven EVM chain built for the golden age of GPU mining.</p>
+        <p class="security-note"><strong>Security note:</strong> Never share your seed phrase. We never DM first.</p>
+      </div>
+      <div>
+        <h4>Quick Links</h4>
+        <div class="footer-links">
+          <a href="#network" data-scroll>Network Info</a>
+          <a href="#mining" data-scroll>Mining Pool</a>
+          <a href="#wallet" data-scroll>Wallet Setup</a>
+          <a href="#upgrade" data-scroll>Mainnet Upgrade</a>
+          <a href="https://explorer.207-180-230-125.sslip.io" target="_blank" rel="noopener">Explorer</a>
+          <a href="https://rpc.207-180-230-125.sslip.io" target="_blank" rel="noopener">RPC</a>
+          <a href="https://x.com/EthernovaCoin" target="_blank" rel="noopener">X (Twitter)</a>
+          <a href="https://discord.gg/MYRzWpdcS2" target="_blank" rel="noopener">Discord</a>
+          <a href="https://github.com/EthernovaDev/ethernova-coregeth" target="_blank" rel="noopener">GitHub (TBD)</a>
+        </div>
+      </div>
+      <div>
+        <h4>Status</h4>
+        <div class="footer-status">
+          <span>✅ Chain producing blocks</span>
+          <span>✅ RPC healthy</span>
+          <span>⚠️ Peers bootstrap phase</span>
+        </div>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <span>© 2024 Ethernova. All rights reserved.</span>
+    </div>
+  </footer>
+
+  <div class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+</body>
+</html>
