@@ -123,10 +123,10 @@ copyButtons.forEach((button) => {
 
 const metaMaskConfig = [
   "Network Name: Ethernova",
-  "RPC: https://rpc.207-180-230-125.sslip.io",
+  "RPC: https://rpc.ethnova.net",
   "ChainId: 77777",
   "Symbol: NOVA",
-  "Explorer: https://explorer.207-180-230-125.sslip.io",
+  "Explorer: https://explorer.ethnova.net",
 ].join("\n");
 
 const metaMaskButton = document.querySelector("[data-copy-metamask]");
