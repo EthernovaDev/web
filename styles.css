@@ -119,6 +119,14 @@ img {
   gap: 10px;
 }
 
+.logo-mark {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 6px 16px rgba(12, 18, 40, 0.5);
+}
+
 .badge {
   font-size: 0.7rem;
   letter-spacing: 0.18em;
