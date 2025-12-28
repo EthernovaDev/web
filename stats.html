@@ -62,7 +62,7 @@
     <div class="card"><div class="label">Pending Tx</div><div class="value" id="pendingTx">-</div><div class="tiny">txpool_status (if enabled)</div></div>
     <div class="card"><div class="label">Chain Data (GB)</div><div class="value" id="chainDataGB">-</div><div class="tiny">Measured on VPS disk</div></div>
     <div class="card"><div class="label">Network Hashrate (GH/s)</div><div class="value" id="networkHashrateGHs">-</div><div class="tiny">Estimated from difficulty / block time</div></div>
-    <div class="card"><div class="label">Avg Difficulty</div><div class="value" id="avgDifficulty">-</div><div class="tiny">Average of last 50 blocks</div></div>
+    <div class="card"><div class="label">Avg Difficulty (G)</div><div class="value" id="avgDifficulty">-</div><div class="tiny" id="avgDifficultyRaw">Raw: -</div></div>
     <div class="card"><div class="label">Latest Difficulty</div><div class="value" id="latestDifficulty">-</div><div class="tiny">Latest block difficulty</div></div>
     <div class="card"><div class="label">Last Update (UTC)</div><div class="value" id="updatedAt">-</div><div class="tiny">Auto refresh every 5 min</div></div>
   </div>
@@ -348,7 +348,10 @@
     $("pendingTx").textContent       = (s.pendingTx === null ? "null (txpool off)" : (s.pendingTx ?? "-"));
     $("chainDataGB").textContent     = fmtNum(s.chainDataGB, 2);
     $("networkHashrateGHs").textContent = s.networkHashrateHuman || fmtNum(s.networkHashrateGHs, 2);
-    $("avgDifficulty").textContent   = s.avgDifficulty || "-";
+    $("avgDifficulty").textContent   = (s.avgDifficultyG !== null && s.avgDifficultyG !== undefined)
+      ? fmtNum(s.avgDifficultyG, 2)
+      : "-";
+    $("avgDifficultyRaw").textContent = s.avgDifficulty ? `Raw: ${s.avgDifficulty}` : "Raw: -";
     $("latestDifficulty").textContent = s.latestDifficulty || "-";
     $("updatedAt").textContent       = s.updatedAt || "-";
 
