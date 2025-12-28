@@ -53,7 +53,7 @@
 <div class="wrap">
 
   <div class="grid">
-    <div class="card"><div class="label">Client Version</div><div class="value" id="clientVersion">—</div><div class="tiny">Source: web3_clientVersion</div></div>
+    <div class="card"><div class="label">Client Version</div><div class="value" id="clientVersion">-</div><div class="tiny" id="clientVersionFull">Full: -</div></div>
     <div class="card"><div class="label">Latest Block</div><div class="value" id="latestBlock">—</div><div class="tiny">Source: eth_blockNumber</div></div>
     <div class="card"><div class="label">Coins Mined</div><div class="value" id="minedCoins">—</div><div class="tiny">Block rewards (1..latest)</div></div>
     <div class="card"><div class="label">Gas Price (Gwei)</div><div class="value" id="gasPriceGwei">—</div><div class="tiny">Source: eth_gasPrice</div></div>
@@ -119,13 +119,23 @@
   };
 
   function fmtNum(x, digits=2){
-    if (x === null || x === undefined) return "—";
+    if (x === null || x === undefined) return "-";
     const n = Number(x);
-    if (Number.isNaN(n)) return "—";
+    if (Number.isNaN(n)) return "-";
     return n.toLocaleString(undefined, {
       maximumFractionDigits: digits,
       minimumFractionDigits: digits === 4 ? 4 : 0
     });
+  }
+
+  function shortClientVersion(s){
+    if (!s || typeof s !== "string") return "-";
+    const parts = s.split("/");
+    const client = parts[0] || "Client";
+    const verPart = parts[1] || "";
+    const m = verPart.match(/v\\d+\\.\\d+\\.\\d+/);
+    const v = m ? m[0] : verPart;
+    return `${client} ${v}`.replace(/\\s+/g, " ").trim();
   }
 
   function setHealth(updatedAtIso){
@@ -339,7 +349,9 @@
     if (!res.ok) throw new Error("Failed to read stats.json (HTTP " + res.status + ")");
     const s = await res.json();
 
-    $("clientVersion").textContent   = s.clientVersion || "—";
+    const full = s.clientVersion || "";
+    $("clientVersion").textContent   = shortClientVersion(full);
+    $("clientVersionFull").textContent = full ? `Full: ${full}` : "Full: -";
     $("latestBlock").textContent     = (s.latestBlock ?? "—");
     $("minedCoins").textContent      = fmtNum(s.minedCoins, 4);
     $("gasPriceGwei").textContent    = fmtNum(s.gasPriceGwei, 2);
