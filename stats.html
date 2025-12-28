@@ -62,6 +62,8 @@
     <div class="card"><div class="label">Pending Tx</div><div class="value" id="pendingTx">-</div><div class="tiny">txpool_status (if enabled)</div></div>
     <div class="card"><div class="label">Chain Data (GB)</div><div class="value" id="chainDataGB">-</div><div class="tiny">Measured on VPS disk</div></div>
     <div class="card"><div class="label">Network Hashrate (GH/s)</div><div class="value" id="networkHashrateGHs">-</div><div class="tiny">Estimated from difficulty / block time</div></div>
+    <div class="card"><div class="label">Avg Difficulty</div><div class="value" id="avgDifficulty">-</div><div class="tiny">Average of last 50 blocks</div></div>
+    <div class="card"><div class="label">Latest Difficulty</div><div class="value" id="latestDifficulty">-</div><div class="tiny">Latest block difficulty</div></div>
     <div class="card"><div class="label">Last Update (UTC)</div><div class="value" id="updatedAt">-</div><div class="tiny">Auto refresh every 5 min</div></div>
   </div>
 
@@ -216,11 +218,12 @@
     { key: "pending",label: "Pending Tx",           axis: "yPend",   extract: (p)=>p.pending },
     { key: "mined",  label: "Coins Mined",          axis: "yMined",  extract: (p)=>p.mined },
     { key: "hash",   label: "Network Hashrate (GH/s)", axis: "yHash", extract: (p)=>p.hashrateGHs },
+    { key: "diff",   label: "Difficulty (G)",       axis: "yDiff",   extract: (p)=>p.difficultyG },
     { key: "chain",  label: "Chain Data (GB)",      axis: "yGB",     extract: (p)=>p.chainDataGB }
   ];
 
   function defaultSelection(){
-    return { avg:true, tps:true, gas:false, pending:false, mined:false, chain:true, hash:true };
+    return { avg:true, tps:true, gas:false, pending:false, mined:false, chain:true, hash:true, diff:false };
   }
 
   function makeAxes(selected){
@@ -243,6 +246,7 @@
     if (selected.avg)   addAxis("yAvg",   "sec", "left", false);
     if (selected.tps)   addAxis("yTPS",   "tps", "right", false);
     if (selected.hash)  addAxis("yHash",  "GH/s","right", true);
+    if (selected.diff)  addAxis("yDiff",  "Diff (G)", "right", true);
     if (selected.chain) addAxis("yGB",    "GB",  "right", true);
     if (selected.gas)   addAxis("yGas",   "gwei","right", true);
     if (selected.pending) addAxis("yPend","tx",  "right", true);
@@ -283,6 +287,7 @@
       avg: "rgba(255, 206, 86, 1)",
       tps: "rgba(54, 162, 235, 1)",
       hash: "rgba(0, 255, 204, 1)",
+      diff: "rgba(200, 200, 200, 1)",
       gas: "rgba(153, 102, 255, 1)",
       pending: "rgba(255, 99, 132, 1)",
       mined: "rgba(75, 192, 192, 1)",
@@ -343,6 +348,8 @@
     $("pendingTx").textContent       = (s.pendingTx === null ? "null (txpool off)" : (s.pendingTx ?? "-"));
     $("chainDataGB").textContent     = fmtNum(s.chainDataGB, 2);
     $("networkHashrateGHs").textContent = s.networkHashrateHuman || fmtNum(s.networkHashrateGHs, 2);
+    $("avgDifficulty").textContent   = s.avgDifficulty || "-";
+    $("latestDifficulty").textContent = s.latestDifficulty || "-";
     $("updatedAt").textContent       = s.updatedAt || "-";
 
     setHealth(s.updatedAt);
