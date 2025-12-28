@@ -63,8 +63,8 @@
     <div class="card"><div class="label">Chain Data (GB)</div><div class="value" id="chainDataGB">-</div><div class="tiny">Measured on VPS disk</div></div>
     <div class="card"><div class="label">Network Hashrate (GH/s)</div><div class="value" id="networkHashrateGHs">-</div><div class="tiny">Estimated from difficulty / block time</div></div>
     <div class="card"><div class="label">Avg Difficulty (G)</div><div class="value" id="avgDifficulty">-</div><div class="tiny" id="avgDifficultyRaw">Raw: -</div></div>
-    <div class="card"><div class="label">Latest Difficulty</div><div class="value" id="latestDifficulty">-</div><div class="tiny">Latest block difficulty</div></div>
-    <div class="card"><div class="label">Last Update (UTC)</div><div class="value" id="updatedAt">-</div><div class="tiny">Auto refresh every 5 min</div></div>
+    <div class="card"><div class="label">Latest Difficulty (G)</div><div class="value" id="latestDifficulty">-</div><div class="tiny" id="latestDifficultyRaw">Raw: -</div></div>
+    <div class="card"><div class="label">Last Update</div><div class="value" id="updatedAt">-</div><div class="tiny">Auto refresh every 5 min</div></div>
   </div>
 
   <div class="split">
@@ -352,8 +352,11 @@
       ? fmtNum(s.avgDifficultyG, 2)
       : "-";
     $("avgDifficultyRaw").textContent = s.avgDifficulty ? `Raw: ${s.avgDifficulty}` : "Raw: -";
-    $("latestDifficulty").textContent = s.latestDifficulty || "-";
-    $("updatedAt").textContent       = s.updatedAt || "-";
+    const latestDifficultyG = Number(s.latestDifficulty) / 1e9;
+    $("latestDifficulty").textContent = Number.isFinite(latestDifficultyG) ? fmtNum(latestDifficultyG, 2) : "-";
+    $("latestDifficultyRaw").textContent = s.latestDifficulty ? `Raw: ${s.latestDifficulty}` : "Raw: -";
+    const dateOnly = (s.updatedAt && typeof s.updatedAt === "string" && s.updatedAt.length >= 10) ? s.updatedAt.slice(0, 10) : "-";
+    $("updatedAt").textContent       = dateOnly;
 
     setHealth(s.updatedAt);
     setHalving(s);
