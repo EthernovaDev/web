@@ -4,72 +4,46 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Ethernova — Network Stats</title>
-
   <style>
     :root{
       --bg:#070a12; --card:#0f1630; --border:#26335b; --text:#eaf0ff; --muted:#a9b6da;
       --good:#30d158; --warn:#ffd60a; --bad:#ff453a;
     }
-    body{
-      margin:0;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
-      background:radial-gradient(1200px 800px at 20% 10%, #111a3a 0%, var(--bg) 55%);
-      color:var(--text);
-    }
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:radial-gradient(1200px 800px at 20% 10%, #111a3a 0%, var(--bg) 55%);color:var(--text);}
     header{padding:28px 18px 10px;max-width:1100px;margin:0 auto;}
     h1{margin:0;font-size:28px;letter-spacing:.2px}
     .sub{color:var(--muted);margin-top:6px}
     .wrap{max-width:1100px;margin:0 auto;padding:14px 18px 30px;}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:14px;}
-    .card{
-      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
-      border:1px solid var(--border);
-      border-radius:16px;
-      padding:14px 14px 12px;
-      box-shadow:0 10px 30px rgba(0,0,0,.25);
-    }
+    .card{background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));border:1px solid var(--border);border-radius:16px;padding:14px 14px 12px;box-shadow:0 10px 30px rgba(0,0,0,.25);}
     .label{font-size:12px;color:var(--muted);margin-bottom:7px}
     .value{font-size:22px;font-weight:750;line-height:1.15;word-break:break-word}
     .tiny{font-size:12px;color:var(--muted);margin-top:10px}
     .row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-    .pill{
-      display:inline-flex;align-items:center;gap:8px;
-      border:1px solid var(--border);
-      border-radius:999px;
-      padding:7px 10px;
-      background:rgba(255,255,255,.02);
-      color:var(--muted);
-      font-size:12px
-    }
+    .pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:999px;padding:7px 10px;background:rgba(255,255,255,.02);color:var(--muted);font-size:12px}
     .dot{width:10px;height:10px;border-radius:50%}
-    .chartCard{margin-top:12px}
-    /* Make canvas look sharp and give it enough physical height */
-    .chartWrap{margin-top:10px; height:420px;}
-    canvas{width:100% !important; height:100% !important; display:block;}
-    a{color:#9fc1ff;text-decoration:none}
-    a:hover{text-decoration:underline}
-    .btn{
-      cursor:pointer;border:1px solid var(--border);
-      background:rgba(255,255,255,.03);color:var(--text);
-      padding:8px 10px;border-radius:10px;font-size:12px
-    }
+    a{color:#9fc1ff;text-decoration:none} a:hover{text-decoration:underline}
+    .btn{cursor:pointer;border:1px solid var(--border);background:rgba(255,255,255,.03);color:var(--text);padding:8px 10px;border-radius:10px;font-size:12px}
     select.btn{padding:8px 10px}
     .controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .chartCard{margin-top:12px}
+    .chartWrap{margin-top:10px;height:440px}
+    canvas{width:100% !important;height:100% !important;display:block}
+    .toggles{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .toggle{display:flex;gap:8px;align-items:center;border:1px solid var(--border);border-radius:999px;padding:6px 10px;background:rgba(255,255,255,.02);font-size:12px;color:var(--muted)}
+    .toggle input{transform:translateY(1px)}
+    .split{display:grid;grid-template-columns:1fr;gap:12px;margin-top:12px}
   </style>
 </head>
-
 <body>
+
 <header>
   <div class="row">
     <div>
       <h1>🌌 Ethernova Network Stats</h1>
-      <div class="sub">
-        Live data from
-        <a href="https://api.ethnova.net/stats.json" target="_blank" rel="noreferrer">api.ethnova.net</a>
-      </div>
+      <div class="sub">Live data from <a href="https://api.ethnova.net/stats.json" target="_blank" rel="noreferrer">api.ethnova.net</a></div>
     </div>
-
-    <div class="pill" id="healthPill">
+    <div class="pill">
       <span class="dot" id="healthDot" style="background:var(--warn)"></span>
       <span id="healthText">Loading…</span>
     </div>
@@ -79,85 +53,52 @@
 <div class="wrap">
 
   <div class="grid">
-    <div class="card">
-      <div class="label">Client Version</div>
-      <div class="value" id="clientVersion">—</div>
-      <div class="tiny">Source: web3_clientVersion</div>
-    </div>
-
-    <div class="card">
-      <div class="label">Latest Block</div>
-      <div class="value" id="latestBlock">—</div>
-      <div class="tiny">Source: eth_blockNumber</div>
-    </div>
-
-    <div class="card">
-      <div class="label">Coins Mined</div>
-      <div class="value" id="minedCoins">—</div>
-      <div class="tiny">Block rewards (1..latest)</div>
-    </div>
-
-    <div class="card">
-      <div class="label">Gas Price (Gwei)</div>
-      <div class="value" id="gasPriceGwei">—</div>
-      <div class="tiny">Source: eth_gasPrice</div>
-    </div>
-
-    <div class="card">
-      <div class="label">Avg Block Time (sec)</div>
-      <div class="value" id="avgBlockTimeSec">—</div>
-      <div class="tiny">Average of last 50 blocks</div>
-    </div>
-
-    <div class="card">
-      <div class="label">TPS</div>
-      <div class="value" id="tps">—</div>
-      <div class="tiny">Approx. last 50 blocks</div>
-    </div>
-
-    <div class="card">
-      <div class="label">Pending Tx</div>
-      <div class="value" id="pendingTx">—</div>
-      <div class="tiny">txpool_status (if enabled)</div>
-    </div>
-
-    <div class="card">
-      <div class="label">Chain Data (GB)</div>
-      <div class="value" id="chainDataGB">—</div>
-      <div class="tiny">Measured on VPS disk</div>
-    </div>
-
-    <div class="card">
-      <div class="label">Last Update (UTC)</div>
-      <div class="value" id="updatedAt">—</div>
-      <div class="tiny">Auto refresh every 5 min</div>
-    </div>
+    <div class="card"><div class="label">Client Version</div><div class="value" id="clientVersion">—</div><div class="tiny">Source: web3_clientVersion</div></div>
+    <div class="card"><div class="label">Latest Block</div><div class="value" id="latestBlock">—</div><div class="tiny">Source: eth_blockNumber</div></div>
+    <div class="card"><div class="label">Coins Mined</div><div class="value" id="minedCoins">—</div><div class="tiny">Block rewards (1..latest)</div></div>
+    <div class="card"><div class="label">Gas Price (Gwei)</div><div class="value" id="gasPriceGwei">—</div><div class="tiny">Source: eth_gasPrice</div></div>
+    <div class="card"><div class="label">Avg Block Time (sec)</div><div class="value" id="avgBlockTimeSec">—</div><div class="tiny">Average of last 50 blocks</div></div>
+    <div class="card"><div class="label">TPS</div><div class="value" id="tps">—</div><div class="tiny">Approx. last 50 blocks</div></div>
+    <div class="card"><div class="label">Pending Tx</div><div class="value" id="pendingTx">—</div><div class="tiny">txpool_status (if enabled)</div></div>
+    <div class="card"><div class="label">Chain Data (GB)</div><div class="value" id="chainDataGB">—</div><div class="tiny">Measured on VPS disk</div></div>
+    <div class="card"><div class="label">Last Update (UTC)</div><div class="value" id="updatedAt">—</div><div class="tiny">Auto refresh every 5 min</div></div>
   </div>
 
-  <div class="card chartCard">
-    <div class="row">
-      <div>
-        <div class="label">Chart</div>
-        <div class="tiny">Multi-metric lines: Avg Block Time, Chain Data (GB), TPS</div>
-      </div>
-
-      <div class="controls">
-        <select id="range" class="btn" title="Range">
-          <option value="all">All time</option>
-          <option value="1y">Last year</option>
-          <option value="6m">6 months</option>
-          <option value="3m">3 months</option>
-          <option value="1m" selected>Last month</option>
-          <option value="1w">One week</option>
-        </select>
-        <button class="btn" id="btnRefresh">↻ Refresh now</button>
-      </div>
+  <div class="split">
+    <div class="card">
+      <div class="label">Next Halving (estimate)</div>
+      <div class="value" id="halvingMain">—</div>
+      <div class="tiny" id="halvingSub">Uses avgBlockTimeSec + remaining blocks. ETA shown in UTC.</div>
     </div>
 
-    <div class="chartWrap">
-      <canvas id="chart"></canvas>
+    <div class="card chartCard">
+      <div class="row">
+        <div>
+          <div class="label">Chart</div>
+          <div class="tiny">Pick one or show all lines. Range controls which history file is loaded.</div>
+        </div>
+        <div class="controls">
+          <select id="range" class="btn" title="Range">
+            <option value="all">All time</option>
+            <option value="1y">Last year</option>
+            <option value="6m">6 months</option>
+            <option value="3m">3 months</option>
+            <option value="1m" selected>Last month</option>
+            <option value="1w">One week</option>
+          </select>
+          <button class="btn" id="btnAll">All</button>
+          <button class="btn" id="btnNone">None</button>
+          <button class="btn" id="btnRefresh">↻ Refresh</button>
+        </div>
+      </div>
+
+      <div class="toggles" id="toggleRow"></div>
+
+      <div class="chartWrap">
+        <canvas id="chart"></canvas>
+      </div>
+      <div class="tiny" id="err" style="margin-top:10px"></div>
     </div>
-    <div class="tiny" id="err" style="margin-top:10px"></div>
   </div>
 
 </div>
@@ -165,9 +106,14 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
   const STATS_URL = "https://api.ethnova.net/stats.json";
-  const HIST_URL  = (range) => `https://api.ethnova.net/history-${range}.json`;
+  const HIST_URL = (range) => `https://api.ethnova.net/history-${range}.json`;
 
-  const el = (id) => document.getElementById(id);
+  const $ = (id) => document.getElementById(id);
+
+  const storage = {
+    get(k, fallback){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback; } catch { return fallback; } },
+    set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+  };
 
   function fmtNum(x, digits=2){
     if (x === null || x === undefined) return "—";
@@ -180,16 +126,12 @@
   }
 
   function setHealth(updatedAtIso){
-    const dot = el("healthDot");
-    const txt = el("healthText");
+    const dot = $("healthDot");
+    const txt = $("healthText");
     if (!updatedAtIso) { dot.style.background="var(--warn)"; txt.textContent="No data"; return; }
-
     const t = Date.parse(updatedAtIso);
     if (Number.isNaN(t)) { dot.style.background="var(--warn)"; txt.textContent="Invalid timestamp"; return; }
-
-    const ageMs = Date.now() - t;
-    const ageMin = ageMs / 60000;
-
+    const ageMin = (Date.now() - t) / 60000;
     if (ageMin <= 8) { dot.style.background="var(--good)"; txt.textContent=`OK • updated ${ageMin.toFixed(1)} min ago`; }
     else if (ageMin <= 20) { dot.style.background="var(--warn)"; txt.textContent=`Slow • ${ageMin.toFixed(1)} min ago`; }
     else { dot.style.background="var(--bad)"; txt.textContent=`Stale • ${ageMin.toFixed(1)} min ago`; }
@@ -203,7 +145,6 @@
     const D = String(d.getUTCDate()).padStart(2,"0");
     const hh = String(d.getUTCHours()).padStart(2,"0");
     const mm = String(d.getUTCMinutes()).padStart(2,"0");
-
     if (range === "1w") return `${hh}:${mm}`;
     if (range === "1m") return `${M}-${D}`;
     if (range === "3m" || range === "6m") return `${M}-${D}`;
@@ -211,137 +152,259 @@
     return `${Y}-${M}`;
   }
 
-  let chart;
-
-  async function loadStats(){
-    const res = await fetch(STATS_URL, { cache: "no-store" });
-    if (!res.ok) throw new Error("Failed to read stats.json (HTTP " + res.status + ")");
-    const s = await res.json();
-
-    el("clientVersion").textContent   = s.clientVersion || "—";
-    el("latestBlock").textContent     = (s.latestBlock ?? "—");
-    el("minedCoins").textContent      = fmtNum(s.minedCoins, 4);
-    el("gasPriceGwei").textContent    = fmtNum(s.gasPriceGwei, 2);
-    el("avgBlockTimeSec").textContent = fmtNum(s.avgBlockTimeSec, 2);
-    el("tps").textContent             = fmtNum(s.tps, 4);
-    el("pendingTx").textContent       = (s.pendingTx === null ? "null (txpool off)" : (s.pendingTx ?? "—"));
-    el("chainDataGB").textContent     = fmtNum(s.chainDataGB, 2);
-    el("updatedAt").textContent       = s.updatedAt || "—";
-    setHealth(s.updatedAt);
+  // Halving schedule
+  const HALVING_BLOCKS = [2102400, 4204800, 6307200, 8409600];
+  function rewardAt(h){
+    if (h < 2102400) return 10.0;
+    if (h < 4204800) return 5.0;
+    if (h < 6307200) return 2.5;
+    if (h < 8409600) return 1.25;
+    return 1.0;
+  }
+  function nextHalvingBlock(h){
+    for (const b of HALVING_BLOCKS) if (b > h) return b;
+    return null;
   }
 
-  function buildChart({range, hist}){
-    const labels = hist.map(x => labelFor(range, x.t));
+  function formatUtc(dt){
+    // Example: 2025-12-28 04:46 UTC
+    const Y = dt.getUTCFullYear();
+    const M = String(dt.getUTCMonth()+1).padStart(2,"0");
+    const D = String(dt.getUTCDate()).padStart(2,"0");
+    const hh = String(dt.getUTCHours()).padStart(2,"0");
+    const mm = String(dt.getUTCMinutes()).padStart(2,"0");
+    return `${Y}-${M}-${D} ${hh}:${mm} UTC`;
+  }
 
-    // Required series
-    const avg = hist.map(x => x.avg);
-    const tps = hist.map(x => x.tps);
-    const gb  = hist.map(x => x.chainGB ?? x.chainDataGB ?? null); // just in case
+  function setHalving(stats){
+    const h = Number(stats.latestBlock);
+    const abt = Number(stats.avgBlockTimeSec);
+    const updatedAt = stats.updatedAt ? Date.parse(stats.updatedAt) : Date.now();
+    const nextB = nextHalvingBlock(h);
 
-    // Your API history entries (from our earlier design) used:
-    // { t, avg, tps, pending, gas, mined }
-    // chain data is not included in history by default, so we use fallback:
-    // - If chain GB isn't in history, we'll draw it as a flat line using latest stats (handled below).
-    const hasGB = gb.some(v => v !== null && v !== undefined);
+    if (!nextB) {
+      $("halvingMain").textContent = "No further halvings scheduled";
+      $("halvingSub").textContent = "Current reward is the final scheduled tier.";
+      return;
+    }
 
-    const ctx = el("chart").getContext("2d");
+    const currentReward = rewardAt(h);
+    const nextReward = rewardAt(nextB);
+    const remaining = Math.max(0, nextB - h);
+
+    if (!Number.isFinite(abt) || abt <= 0) {
+      $("halvingMain").textContent = `Next halving at block ${nextB.toLocaleString()}`;
+      $("halvingSub").textContent = `Reward: ${currentReward} → ${nextReward} NOVA • Remaining blocks: ${remaining.toLocaleString()} • ETA unavailable (avgBlockTimeSec missing)`;
+      return;
+    }
+
+    const etaMs = updatedAt + remaining * abt * 1000;
+    const eta = new Date(etaMs);
+
+    const days = (remaining * abt) / 86400;
+    $("halvingMain").textContent = `Block ${nextB.toLocaleString()} • ETA ${formatUtc(eta)}`;
+    $("halvingSub").textContent =
+      `Reward: ${currentReward} → ${nextReward} NOVA • Remaining: ${remaining.toLocaleString()} blocks (~${days.toFixed(1)} days)`;
+  }
+
+  // Chart datasets (toggleable)
+  const METRICS = [
+    { key: "avg",    label: "Avg Block Time (sec)", axis: "yAvg",    extract: (p)=>p.avg },
+    { key: "tps",    label: "TPS",                  axis: "yTPS",    extract: (p)=>p.tps },
+    { key: "gas",    label: "Gas Price (Gwei)",     axis: "yGas",    extract: (p)=>p.gas },
+    { key: "pending",label: "Pending Tx",           axis: "yPend",   extract: (p)=>p.pending },
+    { key: "mined",  label: "Coins Mined",          axis: "yMined",  extract: (p)=>p.mined },
+    { key: "chain",  label: "Chain Data (GB)",      axis: "yGB",     extract: (p)=>p.chainDataGB }
+  ];
+
+  function defaultSelection(){
+    return { avg:true, tps:true, gas:false, pending:false, mined:false, chain:true };
+  }
+
+  function makeAxes(selected){
+    const axes = {
+      x: { ticks: { color: "#a9b6da", maxTicksLimit: 12 }, grid: { color: "rgba(255,255,255,.06)" } }
+    };
+
+    // helper to add an axis only if selected
+    const addAxis = (id, title, position, offset=false) => {
+      axes[id] = {
+        position,
+        offset,
+        ticks: { color: "#a9b6da" },
+        grid: { drawOnChartArea: position === "left" }, // only one grid on chart for clarity
+        beginAtZero: true,
+        title: { display: true, text: title, color: "#a9b6da" }
+      };
+    };
+
+    if (selected.avg)   addAxis("yAvg",   "sec", "left", false);
+    if (selected.tps)   addAxis("yTPS",   "tps", "right", false);
+    if (selected.chain) addAxis("yGB",    "GB",  "right", true);
+    if (selected.gas)   addAxis("yGas",   "gwei","right", true);
+    if (selected.pending) addAxis("yPend","tx",  "right", true);
+    if (selected.mined) addAxis("yMined", "NOVA","right", true);
+
+    return axes;
+  }
+
+  function buildToggleUI(selected){
+    const row = $("toggleRow");
+    row.innerHTML = "";
+    for (const m of METRICS) {
+      const id = "tg_" + m.key;
+      const wrap = document.createElement("label");
+      wrap.className = "toggle";
+      wrap.innerHTML = `<input type="checkbox" id="${id}"><span>${m.label}</span>`;
+      row.appendChild(wrap);
+      const cb = wrap.querySelector("input");
+      cb.checked = !!selected[m.key];
+      cb.addEventListener("change", () => {
+        selected[m.key] = cb.checked;
+        storage.set("stats_selected", selected);
+        renderChart(window.__lastRange, window.__lastHist, selected);
+      });
+    }
+  }
+
+  let chart;
+
+  function renderChart(range, hist, selected){
+    if (!hist) return;
+
+    const labels = hist.map(p => labelFor(range, p.t));
+    const datasets = [];
+
+    // Assign unique-ish colors so multiple lines are readable
+    const colors = {
+      avg: "rgba(255, 206, 86, 1)",
+      tps: "rgba(54, 162, 235, 1)",
+      gas: "rgba(153, 102, 255, 1)",
+      pending: "rgba(255, 99, 132, 1)",
+      mined: "rgba(75, 192, 192, 1)",
+      chain: "rgba(255, 159, 64, 1)"
+    };
+
+    for (const m of METRICS) {
+      if (!selected[m.key]) continue;
+      const data = hist.map(p => {
+        const v = m.extract(p);
+        if (v === null || v === undefined) return null;
+        const n = Number(v);
+        return Number.isFinite(n) ? n : null;
+      });
+      datasets.push({
+        label: m.label,
+        data,
+        yAxisID: m.axis,
+        tension: 0.25,
+        pointRadius: 0,
+        borderWidth: 2,
+        spanGaps: true,
+        borderColor: colors[m.key]
+      });
+    }
+
+    const ctx = $("chart").getContext("2d");
     if (chart) chart.destroy();
 
-    // Make it crisp: respect devicePixelRatio (or enforce a minimum)
     const dpr = Math.max(2, window.devicePixelRatio || 1);
-
-    // If chain GB is missing from history, we'll inject it as a constant line from current card value
-    let gbSeries = gb;
-    if (!hasGB) {
-      const gbNow = Number(el("chainDataGB").textContent.replace(/,/g,""));
-      if (!Number.isNaN(gbNow)) gbSeries = hist.map(() => gbNow);
-    }
 
     chart = new Chart(ctx, {
       type: "line",
-      data: {
-        labels,
-        datasets: [
-          { label: "Avg Block Time (sec)", data: avg, yAxisID: "yTime", tension: 0.25, pointRadius: 0 },
-          { label: "TPS", data: tps, yAxisID: "yTPS", tension: 0.25, pointRadius: 0 },
-          { label: "Chain Data (GB)", data: gbSeries, yAxisID: "yGB", tension: 0.25, pointRadius: 0 }
-        ]
-      },
+      data: { labels, datasets },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         animation: false,
         devicePixelRatio: dpr,
         interaction: { mode: "index", intersect: false },
-        plugins: {
-          legend: { labels: { color: "#eaf0ff" } },
-          tooltip: { enabled: true }
-        },
-        scales: {
-          x: {
-            ticks: { color: "#a9b6da", maxTicksLimit: 12 },
-            grid: { color: "rgba(255,255,255,.06)" }
-          },
-          yTime: {
-            position: "left",
-            ticks: { color: "#a9b6da" },
-            grid: { color: "rgba(255,255,255,.06)" },
-            beginAtZero: true,
-            title: { display: true, text: "sec", color: "#a9b6da" }
-          },
-          yTPS: {
-            position: "right",
-            ticks: { color: "#a9b6da" },
-            grid: { drawOnChartArea: false },
-            beginAtZero: true,
-            title: { display: true, text: "tps", color: "#a9b6da" }
-          },
-          yGB: {
-            position: "right",
-            offset: true,
-            ticks: { color: "#a9b6da" },
-            grid: { drawOnChartArea: false },
-            beginAtZero: true,
-            title: { display: true, text: "GB", color: "#a9b6da" }
-          }
-        }
+        plugins: { legend: { labels: { color: "#eaf0ff" } } },
+        scales: makeAxes(selected)
       }
     });
   }
 
-  async function loadChart(range){
+  async function loadStats(){
+    const res = await fetch(STATS_URL, { cache: "no-store" });
+    if (!res.ok) throw new Error("Failed to read stats.json (HTTP " + res.status + ")");
+    const s = await res.json();
+
+    $("clientVersion").textContent   = s.clientVersion || "—";
+    $("latestBlock").textContent     = (s.latestBlock ?? "—");
+    $("minedCoins").textContent      = fmtNum(s.minedCoins, 4);
+    $("gasPriceGwei").textContent    = fmtNum(s.gasPriceGwei, 2);
+    $("avgBlockTimeSec").textContent = fmtNum(s.avgBlockTimeSec, 2);
+    $("tps").textContent             = fmtNum(s.tps, 4);
+    $("pendingTx").textContent       = (s.pendingTx === null ? "null (txpool off)" : (s.pendingTx ?? "—"));
+    $("chainDataGB").textContent     = fmtNum(s.chainDataGB, 2);
+    $("updatedAt").textContent       = s.updatedAt || "—";
+
+    setHealth(s.updatedAt);
+    setHalving(s);
+
+    return s;
+  }
+
+  async function loadHistory(range){
     const res = await fetch(HIST_URL(range), { cache: "no-store" });
     if (!res.ok) throw new Error(`Failed to read history-${range}.json (HTTP ${res.status})`);
     const hist = await res.json();
-
-    // IMPORTANT: our history schema includes {t, avg, tps, pending, gas, mined}
-    // It does NOT include chainDataGB by default. buildChart() handles that gracefully.
-
-    buildChart({ range, hist });
+    return hist;
   }
 
   async function refresh(){
-    el("err").textContent = "";
+    $("err").textContent = "";
     try{
-      const range = el("range").value;
+      const range = $("range").value;
+      storage.set("stats_range", range);
+
       await loadStats();
-      await loadChart(range);
+      const hist = await loadHistory(range);
+
+      // stash for quick re-render when toggles change
+      window.__lastRange = range;
+      window.__lastHist = hist;
+
+      const selected = storage.get("stats_selected", defaultSelection());
+      buildToggleUI(selected);
+
+      // If chainDataGB missing from history, keep dataset but it will be gaps (ok)
+      renderChart(range, hist, selected);
     }catch(e){
-      el("err").textContent = "Error: " + e.message;
+      $("err").textContent = "Error: " + e.message;
       setHealth(null);
     }
   }
 
-  el("btnRefresh").addEventListener("click", refresh);
-  el("range").addEventListener("change", refresh);
+  // Init: restore range + selected metrics
+  const savedRange = storage.get("stats_range", "1m");
+  $("range").value = savedRange;
+
+  $("btnRefresh").addEventListener("click", refresh);
+  $("range").addEventListener("change", refresh);
+
+  $("btnAll").addEventListener("click", () => {
+    const selected = {};
+    for (const m of METRICS) selected[m.key] = true;
+    storage.set("stats_selected", selected);
+    buildToggleUI(selected);
+    renderChart(window.__lastRange, window.__lastHist, selected);
+  });
+
+  $("btnNone").addEventListener("click", () => {
+    const selected = {};
+    for (const m of METRICS) selected[m.key] = false;
+    storage.set("stats_selected", selected);
+    buildToggleUI(selected);
+    renderChart(window.__lastRange, window.__lastHist, selected);
+  });
 
   refresh();
   setInterval(refresh, 5 * 60 * 1000);
 
-  // Re-render sharply on resize (helps perceived “HD”)
-  window.addEventListener("resize", () => {
-    if (chart) chart.resize();
-  });
+  window.addEventListener("resize", () => { if (chart) chart.resize(); });
 </script>
+
 </body>
 </html>
