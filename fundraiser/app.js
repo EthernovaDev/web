@@ -4,19 +4,9 @@
   LAUNCH_DATE_UTC: "2026-01-01T00:00:00Z",
   DEADLINE_DAYS: 45,
   USDT_CONTRACT_TRON: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
-  API_BASE: "https://apilist.tronscanapi.com",
-  API_BASES: [
-    "https://apilist.tronscanapi.com",
-    "https://apilist.tronscan.org",
-  ],
   API_MODE: "proxy",
   PROXY_BASE: "https://ethnova-tronscan-proxy.jemc787.workers.dev",
-  TRANSFERS_PATH: "/api/token_trc20/transfers",
-  FALLBACK_PATH: "/api/token_trc20/transfers",
   PROXY_TRANSFERS_PATH: "/trc20/transfers",
-  PRIMARY_QUERY_MODE: "related",
-  FALLBACK_QUERY_MODE: "address",
-  FALLBACK_CONFIRM: false,
   TRONSCAN_WALLET_URL: "https://tronscan.org/#/address/{ADDRESS}",
   TRONSCAN_TX_URL: "https://tronscan.org/#/transaction/{TX}",
   REFRESH_SECONDS: 60,
@@ -91,17 +81,17 @@ const state = {
   latestIncomingTxHash: "",
   latestIncomingTxUrl: "",
   diagnostics: {
-    source: "-",
-    base: "-",
-    query: "-",
-    confirm: "-",
-    lastFetch: "-",
-    httpStatus: "-",
+    source: "Proxy",
+    base: CONFIG.PROXY_BASE,
+    query: "pending",
+    confirm: "0",
+    lastFetch: "pending",
+    httpStatus: "pending",
     records: 0,
     incoming: 0,
-    latestTx: "-",
-    knownTx: "-",
-    error: "",
+    latestTx: "none",
+    knownTx: "pending",
+    error: "none",
     attempts: [],
     notes: [],
   },
@@ -117,17 +107,6 @@ function normalizeAddress(value) {
   return value.trim().toLowerCase();
 }
 
-function apiBase(base) {
-  return sanitizeBase(base);
-}
-
-function getBaseByMode(mode) {
-  if (mode === "proxy") {
-    return getProxyBase();
-  }
-  return sanitizeBase(CONFIG.API_BASE);
-}
-
 function getProxyBase() {
   const base = sanitizeBase(CONFIG.PROXY_BASE);
   if (!base) return "";
@@ -139,21 +118,13 @@ function isProxyConfigured() {
   return Boolean(getProxyBase());
 }
 
-function getApiBases() {
-  if (Array.isArray(CONFIG.API_BASES) && CONFIG.API_BASES.length > 0) {
-    return CONFIG.API_BASES.map((base) => sanitizeBase(base)).filter(Boolean);
-  }
-  const fallback = sanitizeBase(CONFIG.API_BASE);
-  return fallback ? [fallback] : [];
-}
-
 function formatUSDT(value) {
-  if (!Number.isFinite(value)) return "-";
+  if (!Number.isFinite(value)) return "0.00";
   return value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function formatNumber(value, digits) {
-  if (!Number.isFinite(value)) return "-";
+  if (!Number.isFinite(value)) return "0";
   return value.toLocaleString(undefined, { maximumFractionDigits: digits, minimumFractionDigits: digits });
 }
 
@@ -261,18 +232,18 @@ function setDataSource(label, base) {
     elements.dataSource.textContent = `Source: ${label}${suffix}`;
   }
   state.diagnostics.source = label;
-  state.diagnostics.base = base || "-";
+  state.diagnostics.base = base || "not configured";
   if (elements.diagSource) {
-    elements.diagSource.textContent = label || "-";
+    elements.diagSource.textContent = label || "Proxy";
   }
   if (elements.diagBase) {
-    elements.diagBase.textContent = base || "-";
+    elements.diagBase.textContent = base || "not configured";
   }
 }
 
 function updateDataRecords(count) {
   if (!elements.dataRecords) return;
-  const value = Number.isFinite(count) ? count : "-";
+  const value = Number.isFinite(count) ? count : 0;
   elements.dataRecords.textContent = `Records: ${value}`;
 }
 
@@ -296,7 +267,7 @@ function setLatestTxState(tx, reason) {
   }
 
   if (elements.latestTxCaption) {
-    const label = hasTx ? `Latest: ${shortTx(tx)}` : reason || "Latest: -";
+    const label = hasTx ? `Latest: ${shortTx(tx)}` : reason || "Latest: none";
     elements.latestTxCaption.textContent = label;
   }
 
@@ -306,12 +277,12 @@ function setLatestTxState(tx, reason) {
       elements.diagLatestTx.href = buildTxUrl(tx);
       elements.diagLatestTx.setAttribute("aria-disabled", "false");
     } else {
-      elements.diagLatestTx.textContent = "-";
+      elements.diagLatestTx.textContent = "none";
       elements.diagLatestTx.href = "#";
       elements.diagLatestTx.setAttribute("aria-disabled", "true");
     }
   }
-  state.diagnostics.latestTx = hasTx ? tx : "-";
+  state.diagnostics.latestTx = hasTx ? tx : "none";
 }
 
 function shouldShowDebugLink() {
@@ -322,8 +293,8 @@ function shouldShowDebugLink() {
 
 function updateDiagnosticsUI() {
   if (!elements.diagFetchTime) return;
-  elements.diagFetchTime.textContent = state.diagnostics.lastFetch || "-";
-  elements.diagStatus.textContent = state.diagnostics.httpStatus || "-";
+  elements.diagFetchTime.textContent = state.diagnostics.lastFetch || "pending";
+  elements.diagStatus.textContent = state.diagnostics.httpStatus || "pending";
   elements.diagRecords.textContent = String(state.diagnostics.records ?? 0);
   elements.diagIncoming.textContent = String(state.diagnostics.incoming ?? 0);
   if (elements.diagQuery) {
@@ -333,9 +304,9 @@ function updateDiagnosticsUI() {
     elements.diagConfirm.textContent = state.diagnostics.confirm || "-";
   }
   if (elements.diagKnownTx) {
-    elements.diagKnownTx.textContent = state.diagnostics.knownTx || "-";
+    elements.diagKnownTx.textContent = state.diagnostics.knownTx || "pending";
   }
-  elements.diagError.textContent = state.diagnostics.error || "-";
+  elements.diagError.textContent = state.diagnostics.error || "none";
   if (elements.diagAttempts) {
     const attempts = state.diagnostics.attempts.slice();
     if (state.diagnostics.notes.length > 0) {
@@ -393,8 +364,8 @@ function updateKnownTxNotice(records, hasError) {
   if (!elements.knownTxNotice || !elements.knownTxButton) return;
   const known = getKnownTxHashes();
   if (known.length === 0) {
-    state.diagnostics.knownTx = "-";
-    if (elements.diagKnownTx) elements.diagKnownTx.textContent = "-";
+    state.diagnostics.knownTx = "none";
+    if (elements.diagKnownTx) elements.diagKnownTx.textContent = "none";
     elements.knownTxNotice.hidden = true;
     return;
   }
@@ -426,20 +397,6 @@ function buildWalletUrlFor(address) {
 
 function buildTxUrl(tx) {
   return CONFIG.TRONSCAN_TX_URL.replace("{TX}", tx);
-}
-
-function createTransferUrl(base, start, limit, options = {}) {
-  const normalizedBase = apiBase(base);
-  const params = new URLSearchParams({
-    start: String(start),
-    limit: String(limit),
-    confirm: "0",
-    direction: "in",
-    contract_address: CONFIG.USDT_CONTRACT_TRON,
-    relatedAddress: CONFIG.TRON_ADDRESS,
-  });
-  const path = options.path || CONFIG.TRANSFERS_PATH;
-  return `${normalizedBase}${path}?${params.toString()}`;
 }
 
 function buildProxyUrl(start, limit) {
@@ -475,28 +432,6 @@ function looksLikeTransfer(item) {
     "to" in item ||
     "from" in item
   );
-}
-
-function extractTransfers(payload) {
-  if (Array.isArray(payload)) return payload;
-  if (!payload || typeof payload !== "object") return [];
-  const candidates = [
-    payload.data,
-    payload.token_transfers,
-    payload.trc20_transfers,
-    payload.transfers,
-    payload.items,
-    payload.list,
-  ];
-  for (const list of candidates) {
-    if (Array.isArray(list)) return list;
-  }
-  for (const value of Object.values(payload)) {
-    if (Array.isArray(value) && value.length > 0 && looksLikeTransfer(value[0])) {
-      return value;
-    }
-  }
-  return [];
 }
 
 function extractProxyTransfers(payload) {
@@ -642,148 +577,19 @@ function convertAmount(raw, decimals) {
   return n / Math.pow(10, decimals);
 }
 
-async function fetchTransfersFromBase(base, sourceLabel, isProxy = false) {
+async function fetchTransfersFromBase(sourceLabel) {
   const limit = 20;
   let lastStatus = null;
+  let start = 0;
+  let total = Infinity;
+  let results = [];
 
-  const runScan = async (options, phaseLabel) => {
-    let start = 0;
-    let total = Infinity;
-    let results = [];
-
-    while (start < CONFIG.MAX_TX_SCAN && start < total) {
-      const url = isProxy ? buildProxyUrl(start, limit) : createTransferUrl(base, start, limit, options);
-      if (!url) {
-        recordAttempt({
-          source: `${sourceLabel}/${phaseLabel}`,
-          url: "(proxy base not configured)",
-          status: 0,
-          records: 0,
-          error: "Proxy base not configured",
-        });
-        const err = new Error("Proxy base not configured");
-        err.status = 0;
-        throw err;
-      }
-      if (start === 0) {
-        const parsed = new URL(url);
-        state.diagnostics.query = parsed.searchParams.toString();
-        state.diagnostics.confirm = parsed.searchParams.get("confirm") || "-";
-      }
-      let res;
-      try {
-        res = await fetch(url, { cache: "no-store" });
-      } catch (error) {
-        recordAttempt({
-          source: `${sourceLabel}/${phaseLabel}`,
-          url,
-          status: 0,
-          records: 0,
-          error: error?.message || "Fetch failed",
-        });
-        throw error;
-      }
-      lastStatus = res.status;
-
-      if (!res.ok) {
-        const body = await readErrorBody(res);
-        const message = body ? `HTTP ${res.status}: ${body}` : `HTTP ${res.status}`;
-        recordAttempt({
-          source: `${sourceLabel}/${phaseLabel}`,
-          url,
-          status: res.status,
-          records: 0,
-          error: message,
-        });
-        const error = new Error(message);
-        error.status = res.status;
-        error.body = body;
-        throw error;
-      }
-
-      let payload;
-      try {
-        payload = await res.json();
-      } catch (error) {
-        recordAttempt({
-          source: `${sourceLabel}/${phaseLabel}`,
-          url,
-          status: res.status,
-          records: 0,
-          error: "Invalid JSON",
-        });
-        throw error;
-      }
-
-      const list = isProxy ? extractProxyTransfers(payload) : extractTransfers(payload);
+  while (start < CONFIG.MAX_TX_SCAN && start < total) {
+    const url = buildProxyUrl(start, limit);
+    if (!url) {
       recordAttempt({
-        source: `${sourceLabel}/${phaseLabel}`,
-        url,
-        status: res.status,
-        records: Array.isArray(list) ? list.length : 0,
-        error: "",
-      });
-
-      const totalCount = extractTotal(payload);
-      if (Number.isFinite(totalCount)) {
-        total = totalCount;
-      }
-
-      if (!Array.isArray(list) || list.length === 0) {
-        break;
-      }
-
-      for (const item of list) {
-        if (isUsdtTransfer(item)) {
-          console.debug("USDT transfer", item);
-        }
-      }
-
-      results = results.concat(list);
-        start += limit;
-    }
-
-    return results;
-  };
-
-  const isProxy = sourceLabel.toLowerCase().includes("proxy");
-  const primaryPath = isProxy ? CONFIG.PROXY_TRANSFERS_PATH : CONFIG.TRANSFERS_PATH;
-  const fallbackPath = isProxy ? CONFIG.PROXY_TRANSFERS_PATH : CONFIG.FALLBACK_PATH;
-
-  let transfers = await runScan(
-    {
-      mode: CONFIG.PRIMARY_QUERY_MODE,
-      confirm: true,
-      path: primaryPath,
-    },
-    "primary"
-  );
-
-  if (transfers.length === 0 && fallbackPath) {
-    transfers = await runScan(
-      {
-        mode: CONFIG.FALLBACK_QUERY_MODE,
-        confirm: CONFIG.FALLBACK_CONFIRM,
-        path: fallbackPath,
-      },
-      "fallback"
-    );
-  }
-
-  return { transfers, status: lastStatus };
-}
-
-async function fetchTransfers() {
-  const apiBases = getApiBases();
-  const proxyBase = getBaseByMode("proxy");
-  let lastError = null;
-  let lastStatus = null;
-
-  const tryFetch = async (base, label, isProxy = false) => {
-    if (!base) {
-      recordAttempt({
-        source: label,
-        url: "(base not configured)",
+        source: sourceLabel,
+        url: "(proxy base not configured)",
         status: 0,
         records: 0,
         error: "Proxy base not configured",
@@ -792,64 +598,98 @@ async function fetchTransfers() {
       err.status = 0;
       throw err;
     }
-    const result = await fetchTransfersFromBase(base, label, isProxy);
-    lastStatus = result.status;
-    return { transfers: result.transfers, source: label, base, status: result.status };
-  };
-
-  if (CONFIG.API_MODE === "proxy") {
+    if (start === 0) {
+      const parsed = new URL(url);
+      state.diagnostics.query = parsed.searchParams.toString();
+      state.diagnostics.confirm = parsed.searchParams.get("confirm") || "-";
+    }
+    let res;
     try {
-      return await tryFetch(proxyBase, "Proxy", true);
+      res = await fetch(url, { cache: "no-store" });
     } catch (error) {
-      lastError = error;
-      const shouldFallback =
-        error?.status === 400 ||
-        error?.status === 403 ||
-        error?.status === 429 ||
-        error?.name === "TypeError";
-      if (shouldFallback) {
-        for (let i = 0; i < apiBases.length; i += 1) {
-        const base = apiBases[i];
-        try {
-          return await tryFetch(base, `Direct base #${i + 1}`, false);
-        } catch (fallbackError) {
-          lastError = fallbackError;
-        }
-      }
+      recordAttempt({
+        source: sourceLabel,
+        url,
+        status: 0,
+        records: 0,
+        error: error?.message || "Fetch failed",
+      });
+      throw error;
     }
+    lastStatus = res.status;
+
+    if (!res.ok) {
+      const body = await readErrorBody(res);
+      const message = body ? `HTTP ${res.status}: ${body}` : `HTTP ${res.status}`;
+      recordAttempt({
+        source: sourceLabel,
+        url,
+        status: res.status,
+        records: 0,
+        error: message,
+      });
+      const error = new Error(message);
+      error.status = res.status;
+      error.body = body;
+      throw error;
     }
-  } else {
-    for (let i = 0; i < apiBases.length; i += 1) {
-      const base = apiBases[i];
-      try {
-        return await tryFetch(base, `Direct base #${i + 1}`, false);
-      } catch (error) {
-        lastError = error;
-        const shouldFallback =
-          error?.status === 400 ||
-          error?.status === 403 ||
-          error?.status === 429 ||
-          error?.name === "TypeError";
-        if (!shouldFallback) {
-          break;
-        }
-      }
+
+    let payload;
+    try {
+      payload = await res.json();
+    } catch (error) {
+      recordAttempt({
+        source: sourceLabel,
+        url,
+        status: res.status,
+        records: 0,
+        error: "Invalid JSON",
+      });
+      throw error;
     }
-    if (proxyBase) {
-      const shouldFallback =
-        lastError?.status === 400 ||
-        lastError?.status === 403 ||
-        lastError?.status === 429 ||
-        lastError?.name === "TypeError";
-      if (shouldFallback) {
-        return await tryFetch(proxyBase, "Proxy", true);
-      }
+
+    const list = extractProxyTransfers(payload);
+    recordAttempt({
+      source: sourceLabel,
+      url,
+      status: res.status,
+      records: Array.isArray(list) ? list.length : 0,
+      error: "",
+    });
+
+    const totalCount = extractTotal(payload);
+    if (Number.isFinite(totalCount)) {
+      total = totalCount;
     }
+
+    if (!Array.isArray(list) || list.length === 0) {
+      break;
+    }
+
+    results = results.concat(list);
+    start += limit;
   }
 
-  const err = lastError || new Error("Unable to fetch transfers");
-  err.status = lastStatus || err.status;
-  throw err;
+  return { transfers: results, status: lastStatus };
+}
+
+async function fetchTransfers() {
+  const proxyBase = getProxyBase();
+  if (!proxyBase) {
+    recordAttempt({
+      source: "Proxy",
+      url: "(proxy base not configured)",
+      status: 0,
+      records: 0,
+      error: "Proxy base not configured",
+    });
+    const err = new Error("Proxy base not configured");
+    err.status = 0;
+    throw err;
+  }
+
+  const result = await fetchTransfersFromBase("Proxy");
+  return { transfers: result.transfers, source: "Proxy", base: proxyBase, status: result.status };
 }
 
 function filterIncoming(transfers) {
@@ -1092,6 +932,36 @@ async function refresh() {
   state.diagnostics.notes = [];
   state.diagnostics.lastFetch = new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC";
   updateLastUpdated();
+  if (!CONFIG.TRON_ADDRESS) {
+    showErrorBanner("Fatal: wallet address missing in config. Live data disabled.");
+    showProxyBanner(true);
+    setDataSource("Proxy", "not configured");
+    updateDataRecords(0);
+    updateProgress(0);
+    renderDonations([]);
+    renderMiniFeed([], true);
+    state.diagnostics.httpStatus = "-";
+    state.diagnostics.records = 0;
+    state.diagnostics.incoming = 0;
+    state.diagnostics.error = "Missing TRON_ADDRESS in config.";
+    updateDiagnosticsUI();
+    return;
+  }
+  if (!isProxyConfigured()) {
+    showErrorBanner("Proxy not configured — live donations cannot load. Configure PROXY_BASE.");
+    showProxyBanner(true);
+    setDataSource("Proxy", "not configured");
+    updateDataRecords(0);
+    updateProgress(0);
+    renderDonations([]);
+    renderMiniFeed([], true);
+    state.diagnostics.httpStatus = "-";
+    state.diagnostics.records = 0;
+    state.diagnostics.incoming = 0;
+    state.diagnostics.error = "Proxy base not configured.";
+    updateDiagnosticsUI();
+    return;
+  }
   try {
     showErrorBanner("");
     showProxyBanner(!isProxyConfigured());
@@ -1107,7 +977,7 @@ async function refresh() {
     updateDelayWarning(transfers, donations, latestTx || knownTx);
     updateKnownTxNotice(transfers, false);
     setLatestTxState(latestTx, donations.length ? "" : "No donations detected from API");
-    setDataSource(source, base);
+    setDataSource(source, base || "not configured");
     state.diagnostics.httpStatus = status ? `HTTP ${status}` : "-";
     state.diagnostics.records = transfers.length;
     state.diagnostics.incoming = donations.length;
@@ -1133,11 +1003,13 @@ async function refresh() {
     if (!isProxyConfigured()) {
       showProxyBanner(true);
     }
+    updateProgress(0);
+    renderDonations([]);
     renderMiniFeed([], true);
     updateDelayWarning([], [], null);
     updateKnownTxNotice([], true);
     setLatestTxState(null, "API unavailable");
-    setDataSource("Unavailable", "-");
+    setDataSource("Proxy", getProxyBase() || "not configured");
     state.diagnostics.httpStatus = status ? `HTTP ${status}` : "-";
     state.diagnostics.records = 0;
     state.diagnostics.incoming = 0;
@@ -1196,7 +1068,13 @@ function setupQr() {
 
 function init() {
   if (!elements.addressText) return;
-  elements.addressText.textContent = CONFIG.TRON_ADDRESS;
+  console.log("[fundraiser] API_MODE =", CONFIG.API_MODE, "PROXY_BASE =", CONFIG.PROXY_BASE);
+  if (!CONFIG.TRON_ADDRESS) {
+    showErrorBanner("Fatal: wallet address missing in config. Live data disabled.");
+    state.diagnostics.error = "Missing TRON_ADDRESS in config.";
+    updateDiagnosticsUI();
+  }
+  elements.addressText.textContent = CONFIG.TRON_ADDRESS || "Address missing";
   if (elements.verifyWalletBtn) {
     elements.verifyWalletBtn.href = buildWalletUrl();
   }
@@ -1252,10 +1130,8 @@ function init() {
   if (elements.feedRefreshSeconds) {
     elements.feedRefreshSeconds.textContent = String(CONFIG.REFRESH_SECONDS);
   }
-  const initialBases = getApiBases();
-  const initialBase = CONFIG.API_MODE === "proxy" ? getProxyBase() : initialBases[0];
-  const initialLabel = CONFIG.API_MODE === "proxy" ? "Proxy" : "Direct base #1";
-  setDataSource(initialLabel, initialBase || "-");
+  const initialBase = getProxyBase();
+  setDataSource("Proxy", initialBase || "not configured");
   setLatestTxState(null, "No donations detected from API");
   showProxyBanner(!isProxyConfigured());
   updateDeadline();

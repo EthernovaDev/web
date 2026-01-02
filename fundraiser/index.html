@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -34,8 +34,8 @@
             </div>
             <div class="deadline">
               <div class="label">Deadline</div>
-              <div class="deadline-date" id="deadlineDate">-</div>
-              <div class="tiny">Days remaining: <span id="daysRemaining">-</span></div>
+              <div class="deadline-date" id="deadlineDate">Loading...</div>
+              <div class="tiny">Days remaining: <span id="daysRemaining">0</span></div>
             </div>
           </div>
           <div class="progress-bar" aria-hidden="true">
@@ -44,15 +44,15 @@
           <div class="stats-grid">
             <div class="stat">
               <div class="label">Goal</div>
-              <div class="value" id="goalValue">-</div>
+              <div class="value" id="goalValue">0.00 USDT</div>
             </div>
             <div class="stat">
               <div class="label">Raised</div>
-              <div class="value" id="raisedValue">-</div>
+              <div class="value" id="raisedValue">0.00 USDT</div>
             </div>
             <div class="stat">
               <div class="label">Remaining</div>
-              <div class="value" id="remainingValue">-</div>
+              <div class="value" id="remainingValue">0.00 USDT</div>
             </div>
           </div>
           <div class="deadline-warning" id="deadlineWarning" hidden>
@@ -70,7 +70,7 @@
         <div class="alert">USDT TRC20 (TRON) ONLY &mdash; DO NOT send ERC20/BEP20.</div>
         <div class="label">Send USDT (TRC20) to:</div>
         <div class="address-row">
-          <code id="addressText">-</code>
+          <code id="addressText">TVYT4XtYtnBEg5VnKNUnx1n8oUeZ8mq2Lg</code>
           <button class="btn" id="copyButton" type="button">Copy</button>
         </div>
         <div class="qr-wrap">
@@ -81,16 +81,16 @@
           <a class="btn primary" id="btnVerifyWallet" href="https://tronscan.org/#/address/TVYT4XtYtnBEg5VnKNUnx1n8oUeZ8mq2Lg" target="_blank" rel="noopener noreferrer">Verify wallet on Tronscan</a>
           <a class="btn" id="btnLatestTx" href="#" target="_blank" rel="noopener noreferrer" aria-disabled="true">Latest tx</a>
         </div>
-        <div class="tiny" id="latestTxCaption">Latest: —</div>
+        <div class="tiny" id="latestTxCaption">Latest: none</div>
           <div class="tiny">
-            <span id="dataSource">Source: Direct Tronscan API</span>
-            <span aria-hidden="true"> • </span>
+            <span id="dataSource">Source: Proxy</span>
+            <span aria-hidden="true"> � </span>
             <span id="dataRecords">Records: 0</span>
           </div>
         <div class="mini-feed">
           <div class="mini-feed-header">
             <div class="feed-title">Live Donations</div>
-            <div class="tiny">Updates every <span id="feedRefreshSeconds">-</span>s</div>
+            <div class="tiny">Updates every <span id="feedRefreshSeconds">0</span>s</div>
           </div>
           <div id="feedList" class="feed-list"></div>
           <div class="tiny" id="feedEmpty">No donations yet. Be the first to support the listing fee!</div>
@@ -103,17 +103,17 @@
           <button class="btn" id="diagnosticsToggle" type="button" aria-expanded="false">Diagnostics</button>
           <div class="diagnostics-panel" id="diagnosticsPanel" hidden>
             <div class="diag-grid">
-              <div class="diag-row"><span class="diag-label">Source</span><span id="diagSource">-</span></div>
-              <div class="diag-row"><span class="diag-label">Base</span><span id="diagBase">-</span></div>
-              <div class="diag-row"><span class="diag-label">Query</span><span id="diagQuery">-</span></div>
-              <div class="diag-row"><span class="diag-label">Confirm</span><span id="diagConfirm">-</span></div>
-              <div class="diag-row"><span class="diag-label">Last fetch</span><span id="diagFetchTime">-</span></div>
-              <div class="diag-row"><span class="diag-label">HTTP status</span><span id="diagStatus">-</span></div>
-              <div class="diag-row"><span class="diag-label">Records</span><span id="diagRecords">-</span></div>
-              <div class="diag-row"><span class="diag-label">Incoming matched</span><span id="diagIncoming">-</span></div>
-              <div class="diag-row"><span class="diag-label">Latest incoming tx</span><a id="diagLatestTx" href="#" target="_blank" rel="noopener noreferrer">-</a></div>
-              <div class="diag-row"><span class="diag-label">Known tx</span><span id="diagKnownTx">-</span></div>
-              <div class="diag-row"><span class="diag-label">Error</span><span id="diagError">-</span></div>
+              <div class="diag-row"><span class="diag-label">Source</span><span id="diagSource">Proxy</span></div>
+              <div class="diag-row"><span class="diag-label">Base</span><span id="diagBase">https://ethnova-tronscan-proxy.jemc787.workers.dev</span></div>
+              <div class="diag-row"><span class="diag-label">Query</span><span id="diagQuery">pending</span></div>
+              <div class="diag-row"><span class="diag-label">Confirm</span><span id="diagConfirm">0</span></div>
+              <div class="diag-row"><span class="diag-label">Last fetch</span><span id="diagFetchTime">pending</span></div>
+              <div class="diag-row"><span class="diag-label">HTTP status</span><span id="diagStatus">pending</span></div>
+              <div class="diag-row"><span class="diag-label">Records</span><span id="diagRecords">0</span></div>
+              <div class="diag-row"><span class="diag-label">Incoming matched</span><span id="diagIncoming">0</span></div>
+              <div class="diag-row"><span class="diag-label">Latest incoming tx</span><a id="diagLatestTx" href="#" target="_blank" rel="noopener noreferrer">none</a></div>
+              <div class="diag-row"><span class="diag-label">Known tx</span><span id="diagKnownTx">pending</span></div>
+              <div class="diag-row"><span class="diag-label">Error</span><span id="diagError">none</span></div>
             </div>
             <div class="diag-actions">
               <button class="btn" id="copyDiagnostics" type="button">Copy diagnostics</button>
@@ -151,7 +151,7 @@
       <div class="row">
         <div>
           <h2>Recent Donations</h2>
-          <div class="tiny">Last updated: <span id="lastUpdated">-</span> (auto refresh every <span id="refreshSeconds">-</span>s)</div>
+          <div class="tiny">Last updated: <span id="lastUpdated">Loading...</span> (auto refresh every <span id="refreshSeconds">0</span>s)</div>
         </div>
         <button class="btn" id="refreshButton" type="button">Refresh now</button>
       </div>
@@ -170,7 +170,7 @@
 
   <footer class="site-footer">
     <div class="container footer">
-      <span>© 2026 Ethernova. All rights reserved.</span>
+      <span>� 2026 Ethernova. All rights reserved.</span>
       <div class="footer-links">
         <a href="/">Home</a>
         <a href="/stats.html">Network Stats</a>
@@ -179,7 +179,7 @@
     </div>
   </footer>
 
-  <script src="./app.js?v=20260102-2" defer></script>
+  <script src="./app.js?v=20260102-3" defer></script>
 </body>
 </html>
 
