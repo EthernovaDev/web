@@ -17,7 +17,7 @@ const CONFIG = {
   KNOWN_TX_HASHES: ["9402383dc1754a3b487fb3483092e869754e2922016e262974852049b0295de2"],
 };
 
-const BUILD_ID = "20260102-qrfix-1";
+const BUILD_ID = "20260102-clean-1";
 
 if (typeof window !== "undefined") {
   window.FUNDRAISER_CONFIG = CONFIG;
@@ -173,6 +173,13 @@ function nowChicago() {
   return formatChicago(new Date(), true);
 }
 
+function formatDateChicago(ts) {
+  if (!ts) return "-";
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return "-";
+  return formatChicago(d, true);
+}
+
 function setHeartbeat(message) {
   if (!elements.heartbeat) return;
   elements.heartbeat.textContent = message;
@@ -181,7 +188,9 @@ function setHeartbeat(message) {
 function setText(id, value) {
   const el = document.getElementById(id);
   if (!el) {
-    console.warn("Missing element id:", id);
+    if (isDebugMode()) {
+      console.warn("Missing element id:", id);
+    }
     return;
   }
   el.textContent = String(value ?? "");
@@ -307,10 +316,9 @@ function setLatestTxState(tx, reason) {
   state.diagnostics.latestTx = hasTx ? tx : "none";
 }
 
-function shouldShowDebugLink() {
-  if (CONFIG.DEBUG_ENABLED) return true;
+function isDebugMode() {
   const params = new URLSearchParams(window.location.search);
-  return params.has("debug");
+  return params.get("debug") === "1";
 }
 
 function updateDiagnosticsUI() {
@@ -848,12 +856,12 @@ function renderDonations(donations) {
     const fromText = CONFIG.SHOW_DONOR_ADDRESSES ? shortAddress(item.from) : "Anonymous";
     const fromLink = item.from ? buildWalletUrlFor(item.from) : "#";
 
-    row.innerHTML = `
-      <span>${formatUSDT(item.amount)} USDT</span>
-      <a href="${fromLink}" target="_blank" rel="noopener">${fromText}</a>
-      <span>${formatDateUtc(item.timestamp)}</span>
-      <a href="${buildTxUrl(item.tx)}" target="_blank" rel="noopener">View TX</a>
-    `;
+      row.innerHTML = `
+        <span>${formatUSDT(item.amount)} USDT</span>
+        <a href="${fromLink}" target="_blank" rel="noopener">${fromText}</a>
+        <span>${formatDateChicago(item.timestamp)}</span>
+        <a href="${buildTxUrl(item.tx)}" target="_blank" rel="noopener">View TX</a>
+      `;
 
     elements.donationsList.appendChild(row);
   }
@@ -912,12 +920,9 @@ function updateLastUpdated() {
 
 function updateDelayWarning(transfers, donations, latestTx) {
   if (!elements.tronscanDelay) return;
-  if (!Array.isArray(transfers) || transfers.length === 0) {
-    elements.tronscanDelay.hidden = true;
-    return;
-  }
-
-  if (donations.length > 0) {
+  const hasRecords = Array.isArray(transfers) && transfers.length > 0;
+  const knownFound = state.diagnostics.knownTx === "FOUND";
+  if (hasRecords || knownFound) {
     elements.tronscanDelay.hidden = true;
     return;
   }
@@ -926,10 +931,12 @@ function updateDelayWarning(transfers, donations, latestTx) {
     elements.delayWalletLink.href = buildWalletUrl();
   }
   let latestTransfer = null;
-  for (const item of transfers) {
-    const ts = parseTimestamp(item) || 0;
-    if (!latestTransfer || ts > latestTransfer.ts) {
-      latestTransfer = { ts, tx: getTxId(item) };
+  if (Array.isArray(transfers)) {
+    for (const item of transfers) {
+      const ts = parseTimestamp(item) || 0;
+      if (!latestTransfer || ts > latestTransfer.ts) {
+        latestTransfer = { ts, tx: getTxId(item) };
+      }
     }
   }
 
@@ -997,8 +1004,8 @@ async function refresh() {
     renderSummary(totalRaised);
     renderDonations(donations);
     renderMiniFeed(donations, false);
-    updateDelayWarning(transfers, donations, latestTx || knownTx);
     updateKnownTxNotice(transfers, false);
+    updateDelayWarning(transfers, donations, latestTx || knownTx);
     setLatestTxState(latestTx, donations.length ? "" : "No donations detected from API");
     setDataSource(source, base || "not configured");
     state.diagnostics.httpStatus = status ? `HTTP ${status}` : "pending";
@@ -1029,8 +1036,8 @@ async function refresh() {
     updateProgress(0);
     renderDonations([]);
     renderMiniFeed([], true);
-    updateDelayWarning([], [], null);
     updateKnownTxNotice([], true);
+    updateDelayWarning([], [], null);
     setLatestTxState(null, "API unavailable");
     setDataSource("Proxy", getProxyBase() || "not configured");
     state.diagnostics.httpStatus = "error";
@@ -1152,7 +1159,7 @@ function initConfig() {
     });
   }
   if (elements.debugLink) {
-    elements.debugLink.hidden = !shouldShowDebugLink();
+    elements.debugLink.hidden = !isDebugMode();
   }
   if (elements.refreshSeconds) {
     elements.refreshSeconds.textContent = String(CONFIG.REFRESH_SECONDS);
@@ -1183,6 +1190,13 @@ function initConfig() {
     }
     state.diagnostics.error = `QR disabled: ${error?.message || String(error)}`;
     setText("diagError", state.diagnostics.error);
+  }
+
+  if (!isDebugMode()) {
+    const diagnostics = document.querySelector(".diagnostics");
+    if (diagnostics) {
+      diagnostics.remove();
+    }
   }
 
   if (elements.refreshButton) {
