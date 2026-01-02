@@ -13,12 +13,20 @@ All runtime settings live at the top of `fundraiser/app.js` in the `CONFIG` obje
 - `API_BASE`
 - `API_MODE` (`direct` or `proxy`)
 - `PROXY_BASE`
+- `TRANSFERS_PATH`
+- `FALLBACK_PATH`
+- `PROXY_TRANSFERS_PATH`
+- `PRIMARY_QUERY_MODE`
+- `FALLBACK_QUERY_MODE`
+- `FALLBACK_CONFIRM`
 - `TRONSCAN_WALLET_URL`
 - `TRONSCAN_TX_URL`
 - `REFRESH_SECONDS`
 - `MAX_TX_SCAN`
 - `SHOW_DONOR_ADDRESSES`
 - `DONATIONS_LIST_LIMIT`
+- `DEBUG_ENABLED`
+- `KNOWN_TX_HASHES`
 
 To change the fundraiser schedule, update `LAUNCH_DATE_UTC` and/or `DEADLINE_DAYS`.
 
@@ -31,9 +39,20 @@ The page uses public TronScan endpoints. If the browser blocks requests due to C
 ## Cloudflare Worker
 Use the included `worker/` folder to create a simple proxy that adds the TronScan API key:
 
-- Deploy `worker/worker.js` with Wrangler.
-- Set the secret in that folder:
-  `wrangler secret put TRONSCAN_API_KEY`
+- `cd worker`
+- `wrangler login`
+- `wrangler deploy`
+- `wrangler secret put TRONSCAN_API_KEY`
+- Copy the deployed Worker URL into `PROXY_BASE` in `fundraiser/app.js`.
+- Set `PROXY_TRANSFERS_PATH` to `/trc20/transfers` when using the worker.
+
+## Debugging
+The fundraiser page has a diagnostics panel and a dedicated debug page:
+
+- `/fundraiser/debug.html` (do not share publicly).
+- To show the debug link in the UI, append `?debug=1` or set `DEBUG_ENABLED` to `true`.
+- Use the debug page to inspect raw API responses and search for specific tx hashes.
+- The debug page reads configuration from `fundraiser/app.js` when loaded.
 
 ## GitHub Pages
 Place this folder at the repo root. GitHub Pages will serve it at:

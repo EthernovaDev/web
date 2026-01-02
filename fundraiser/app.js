@@ -7,13 +7,25 @@
   API_BASE: "https://apilist.tronscanapi.com",
   API_MODE: "direct",
   PROXY_BASE: "",
+  TRANSFERS_PATH: "/api/token_trc20/transfers",
+  FALLBACK_PATH: "/api/token_trc20/transfers",
+  PROXY_TRANSFERS_PATH: "/trc20/transfers",
+  PRIMARY_QUERY_MODE: "related",
+  FALLBACK_QUERY_MODE: "address",
+  FALLBACK_CONFIRM: false,
   TRONSCAN_WALLET_URL: "https://tronscan.org/#/address/{ADDRESS}",
   TRONSCAN_TX_URL: "https://tronscan.org/#/transaction/{TX}",
   REFRESH_SECONDS: 60,
   MAX_TX_SCAN: 500,
   SHOW_DONOR_ADDRESSES: true,
   DONATIONS_LIST_LIMIT: 25,
+  DEBUG_ENABLED: false,
+  KNOWN_TX_HASHES: ["9402383dc1754a3b487fb3483092e869754e2922016e262974852049b0295de2"],
 };
+
+if (typeof window !== "undefined") {
+  window.FUNDRAISER_CONFIG = CONFIG;
+}
 
 const FEED_LIMIT = 8;
 
@@ -23,8 +35,9 @@ const elements = {
   addressText: $("addressText"),
   copyButton: $("copyButton"),
   qrCanvas: $("qrCanvas"),
-  verifyWalletBtn: $("verifyWalletBtn"),
-  latestTxBtn: $("latestTxBtn"),
+  verifyWalletBtn: $("btnVerifyWallet"),
+  latestTxBtn: $("btnLatestTx"),
+  latestTxCaption: $("latestTxCaption"),
   dataSource: $("dataSource"),
   goalValue: $("goalValue"),
   raisedValue: $("raisedValue"),
@@ -38,6 +51,7 @@ const elements = {
   delayWalletLink: $("delayWalletLink"),
   delayTxLink: $("delayTxLink"),
   corsBanner: $("corsBanner"),
+  proxyBanner: $("proxyBanner"),
   lastUpdated: $("lastUpdated"),
   refreshSeconds: $("refreshSeconds"),
   feedRefreshSeconds: $("feedRefreshSeconds"),
@@ -46,11 +60,38 @@ const elements = {
   feedList: $("feedList"),
   feedEmpty: $("feedEmpty"),
   refreshButton: $("refreshButton"),
+  knownTxNotice: $("knownTxNotice"),
+  knownTxButton: $("btnKnownTx"),
+  diagnosticsToggle: $("diagnosticsToggle"),
+  diagnosticsPanel: $("diagnosticsPanel"),
+  diagSource: $("diagSource"),
+  diagFetchTime: $("diagFetchTime"),
+  diagStatus: $("diagStatus"),
+  diagRecords: $("diagRecords"),
+  diagIncoming: $("diagIncoming"),
+  diagLatestTx: $("diagLatestTx"),
+  diagError: $("diagError"),
+  diagAttempts: $("diagAttempts"),
+  copyDiagnostics: $("copyDiagnostics"),
+  debugLink: $("debugLink"),
 };
 
 const state = {
   decimals: null,
   deadline: null,
+  latestIncomingTxHash: "",
+  latestIncomingTxUrl: "",
+  diagnostics: {
+    source: "-",
+    lastFetch: "-",
+    httpStatus: "-",
+    records: 0,
+    incoming: 0,
+    latestTx: "-",
+    error: "",
+    attempts: [],
+    notes: [],
+  },
 };
 
 function sanitizeBase(url) {
@@ -151,6 +192,7 @@ function updateProgress(totalRaised) {
 }
 
 function showErrorBanner(message) {
+  if (!elements.corsBanner) return;
   if (!message) {
     elements.corsBanner.hidden = true;
     return;
@@ -159,45 +201,238 @@ function showErrorBanner(message) {
   elements.corsBanner.hidden = false;
 }
 
-function setDataSource(label) {
-  if (!elements.dataSource) return;
-  elements.dataSource.textContent = `Source: ${label}`;
+function showProxyBanner(show) {
+  if (!elements.proxyBanner) return;
+  elements.proxyBanner.hidden = !show;
 }
 
-function setLatestTxLink(tx) {
-  if (!elements.latestTxBtn) return;
-  if (tx) {
-    elements.latestTxBtn.href = buildTxUrl(tx);
-    elements.latestTxBtn.textContent = "Latest tx";
-    elements.latestTxBtn.classList.remove("disabled");
-    elements.latestTxBtn.setAttribute("aria-disabled", "false");
-  } else {
-    elements.latestTxBtn.href = "#";
-    elements.latestTxBtn.textContent = "Latest tx";
-    elements.latestTxBtn.classList.add("disabled");
-    elements.latestTxBtn.setAttribute("aria-disabled", "true");
+function setDataSource(label) {
+  if (elements.dataSource) {
+    elements.dataSource.textContent = `Source: ${label}`;
   }
+  state.diagnostics.source = label;
+  if (elements.diagSource) {
+    elements.diagSource.textContent = label || "-";
+  }
+}
+
+function setLatestTxState(tx, reason) {
+  const hasTx = Boolean(tx);
+  state.latestIncomingTxHash = hasTx ? tx : "";
+  state.latestIncomingTxUrl = hasTx ? buildTxUrl(tx) : "";
+
+  if (elements.latestTxBtn) {
+    if (hasTx) {
+      elements.latestTxBtn.href = buildTxUrl(tx);
+      elements.latestTxBtn.textContent = "Latest tx";
+      elements.latestTxBtn.classList.remove("disabled");
+      elements.latestTxBtn.setAttribute("aria-disabled", "false");
+    } else {
+      elements.latestTxBtn.href = "#";
+      elements.latestTxBtn.textContent = "Latest tx (none)";
+      elements.latestTxBtn.classList.add("disabled");
+      elements.latestTxBtn.setAttribute("aria-disabled", "true");
+    }
+  }
+
+  if (elements.latestTxCaption) {
+    const label = hasTx ? `Latest: ${shortTx(tx)}` : reason || "Latest: -";
+    elements.latestTxCaption.textContent = label;
+  }
+
+  if (elements.diagLatestTx) {
+    if (hasTx) {
+      elements.diagLatestTx.textContent = tx;
+      elements.diagLatestTx.href = buildTxUrl(tx);
+      elements.diagLatestTx.setAttribute("aria-disabled", "false");
+    } else {
+      elements.diagLatestTx.textContent = "-";
+      elements.diagLatestTx.href = "#";
+      elements.diagLatestTx.setAttribute("aria-disabled", "true");
+    }
+  }
+  state.diagnostics.latestTx = hasTx ? tx : "-";
+}
+
+function shouldShowDebugLink() {
+  if (CONFIG.DEBUG_ENABLED) return true;
+  const params = new URLSearchParams(window.location.search);
+  return params.has("debug");
+}
+
+function updateDiagnosticsUI() {
+  if (!elements.diagFetchTime) return;
+  elements.diagFetchTime.textContent = state.diagnostics.lastFetch || "-";
+  elements.diagStatus.textContent = state.diagnostics.httpStatus || "-";
+  elements.diagRecords.textContent = String(state.diagnostics.records ?? 0);
+  elements.diagIncoming.textContent = String(state.diagnostics.incoming ?? 0);
+  elements.diagError.textContent = state.diagnostics.error || "-";
+  if (elements.diagAttempts) {
+    const attempts = state.diagnostics.attempts.slice();
+    if (state.diagnostics.notes.length > 0) {
+      attempts.push("Notes:");
+      state.diagnostics.notes.forEach((note) => attempts.push(`- ${note}`));
+    }
+    elements.diagAttempts.textContent = attempts.length ? attempts.join("\n") : "No attempts yet.";
+  }
+}
+
+function copyDiagnosticsToClipboard() {
+  const lines = [
+    `Source: ${state.diagnostics.source}`,
+    `Last fetch: ${state.diagnostics.lastFetch}`,
+    `HTTP status: ${state.diagnostics.httpStatus}`,
+    `Records: ${state.diagnostics.records}`,
+    `Incoming matched: ${state.diagnostics.incoming}`,
+    `Latest tx: ${state.diagnostics.latestTx}`,
+    `Error: ${state.diagnostics.error || "-"}`,
+  ];
+  if (state.diagnostics.notes.length > 0) {
+    lines.push("Notes:");
+    state.diagnostics.notes.forEach((note) => lines.push(`- ${note}`));
+  }
+  if (state.diagnostics.attempts.length > 0) {
+    lines.push("Attempts:");
+    state.diagnostics.attempts.forEach((attempt) => lines.push(attempt));
+  }
+  return navigator.clipboard.writeText(lines.join("\n"));
+}
+
+function openInNewTab(url, button) {
+  if (!url) return;
+  if (button) {
+    const original = button.textContent;
+    button.textContent = "Opening...";
+    setTimeout(() => {
+      button.textContent = original;
+    }, 800);
+  }
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
+function getKnownTxHashes() {
+  return Array.isArray(CONFIG.KNOWN_TX_HASHES)
+    ? CONFIG.KNOWN_TX_HASHES.filter((tx) => typeof tx === "string" && tx.length > 0)
+    : [];
+}
+
+function updateKnownTxNotice(records, hasError) {
+  if (!elements.knownTxNotice || !elements.knownTxButton) return;
+  const known = getKnownTxHashes();
+  if (known.length === 0) {
+    elements.knownTxNotice.hidden = true;
+    return;
+  }
+  if (hasError) {
+    elements.knownTxNotice.hidden = true;
+    return;
+  }
+  const found = records.some((item) => {
+    const tx = typeof item === "string" ? item : item?.tx ?? getTxId(item);
+    return tx ? known.includes(tx) : false;
+  });
+  elements.knownTxNotice.hidden = found;
+  const firstKnown = known[0];
+  elements.knownTxButton.dataset.tx = firstKnown;
 }
 
 function buildWalletUrl() {
   return CONFIG.TRONSCAN_WALLET_URL.replace("{ADDRESS}", CONFIG.TRON_ADDRESS);
 }
 
+function buildWalletUrlFor(address) {
+  if (!address) return buildWalletUrl();
+  return CONFIG.TRONSCAN_WALLET_URL.replace("{ADDRESS}", address);
+}
+
 function buildTxUrl(tx) {
   return CONFIG.TRONSCAN_TX_URL.replace("{TX}", tx);
 }
 
-function createTransferUrl(base, start, limit) {
+function createTransferUrl(base, start, limit, options = {}) {
   const normalizedBase = apiBase(base);
   const params = new URLSearchParams({
     limit: String(limit),
     start: String(start),
-    confirm: "true",
     contract_address: CONFIG.USDT_CONTRACT_TRON,
-    relatedAddress: CONFIG.TRON_ADDRESS,
     _: String(Date.now()),
   });
-  return `${normalizedBase}/api/token_trc20/transfers?${params.toString()}`;
+  const mode = options.mode || CONFIG.PRIMARY_QUERY_MODE;
+  if (mode === "address") {
+    params.set("address", CONFIG.TRON_ADDRESS);
+  } else {
+    params.set("relatedAddress", CONFIG.TRON_ADDRESS);
+  }
+  if (options.confirm !== false) {
+    params.set("confirm", "true");
+  }
+  const path = options.path || CONFIG.TRANSFERS_PATH;
+  return `${normalizedBase}${path}?${params.toString()}`;
+}
+
+function recordAttempt({ source, url, status, records, error }) {
+  const statusText = status ? `HTTP ${status}` : "HTTP ?";
+  const recordText = `records=${records ?? 0}`;
+  const errorText = error ? `error=${error}` : "";
+  const line = `#${state.diagnostics.attempts.length + 1} [${source}] ${statusText} ${recordText} ${url}${errorText ? ` ${errorText}` : ""}`;
+  state.diagnostics.attempts.push(line);
+}
+
+function looksLikeTransfer(item) {
+  if (!item || typeof item !== "object") return false;
+  return (
+    "transaction_id" in item ||
+    "txID" in item ||
+    "hash" in item ||
+    "contract_address" in item ||
+    "amount" in item ||
+    "to" in item ||
+    "from" in item
+  );
+}
+
+function extractTransfers(payload) {
+  if (Array.isArray(payload)) return payload;
+  if (!payload || typeof payload !== "object") return [];
+  const candidates = [
+    payload.data,
+    payload.token_transfers,
+    payload.trc20_transfers,
+    payload.transfers,
+    payload.items,
+    payload.list,
+  ];
+  for (const list of candidates) {
+    if (Array.isArray(list)) return list;
+  }
+  for (const value of Object.values(payload)) {
+    if (Array.isArray(value) && value.length > 0 && looksLikeTransfer(value[0])) {
+      return value;
+    }
+  }
+  return [];
+}
+
+function extractTotal(payload) {
+  if (!payload || typeof payload !== "object") return null;
+  const raw =
+    payload.total ??
+    payload.totalCount ??
+    payload.total_count ??
+    payload.count ??
+    payload.pageSize;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
+async function readErrorBody(res) {
+  try {
+    const text = await res.text();
+    if (!text) return "";
+    return text.replace(/\s+/g, " ").slice(0, 160);
+  } catch {
+    return "";
+  }
 }
 
 function findDecimals(item) {
@@ -270,6 +505,8 @@ function isIncomingTransfer(item) {
     item?.to,
     item?.to_address,
     item?.transferInfo?.to,
+    item?.transferInfo?.to_address,
+    item?.transferInfo?.toAddress,
     item?.contractData?.to,
     item?.toAddress,
     getToAddress(item),
@@ -304,60 +541,141 @@ function convertAmount(raw, decimals) {
   return n / Math.pow(10, decimals);
 }
 
-async function fetchTransfersFromBase(base) {
+async function fetchTransfersFromBase(base, sourceLabel) {
   const limit = 20;
-  let start = 0;
-  let total = Infinity;
-  let results = [];
+  let lastStatus = null;
 
-  while (start < CONFIG.MAX_TX_SCAN && start < total) {
-    const url = createTransferUrl(base, start, limit);
-    const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) {
-      const error = new Error(`API error (${res.status})`);
-      error.status = res.status;
-      throw error;
-    }
-    const data = await res.json();
-    const list =
-      data?.data ??
-      data?.trc20_transfers ??
-      data?.transfers ??
-      data?.items ??
-      [];
-    if (!Array.isArray(list) || list.length === 0) {
-      break;
-    }
-    if (Number.isFinite(data?.total)) {
-      total = data.total;
-    }
+  const runScan = async (options, phaseLabel) => {
+    let start = 0;
+    let total = Infinity;
+    let results = [];
 
-    for (const item of list) {
-      if (isUsdtTransfer(item)) {
-        console.debug("USDT transfer", item);
+    while (start < CONFIG.MAX_TX_SCAN && start < total) {
+      const url = createTransferUrl(base, start, limit, options);
+      let res;
+      try {
+        res = await fetch(url, { cache: "no-store" });
+      } catch (error) {
+        recordAttempt({
+          source: `${sourceLabel}/${phaseLabel}`,
+          url,
+          status: 0,
+          records: 0,
+          error: error?.message || "Fetch failed",
+        });
+        throw error;
       }
+      lastStatus = res.status;
+
+      if (!res.ok) {
+        const body = await readErrorBody(res);
+        const message = body ? `HTTP ${res.status}: ${body}` : `HTTP ${res.status}`;
+        recordAttempt({
+          source: `${sourceLabel}/${phaseLabel}`,
+          url,
+          status: res.status,
+          records: 0,
+          error: message,
+        });
+        const error = new Error(message);
+        error.status = res.status;
+        throw error;
+      }
+
+      let payload;
+      try {
+        payload = await res.json();
+      } catch (error) {
+        recordAttempt({
+          source: `${sourceLabel}/${phaseLabel}`,
+          url,
+          status: res.status,
+          records: 0,
+          error: "Invalid JSON",
+        });
+        throw error;
+      }
+
+      const list = extractTransfers(payload);
+      recordAttempt({
+        source: `${sourceLabel}/${phaseLabel}`,
+        url,
+        status: res.status,
+        records: Array.isArray(list) ? list.length : 0,
+        error: "",
+      });
+
+      const totalCount = extractTotal(payload);
+      if (Number.isFinite(totalCount)) {
+        total = totalCount;
+      }
+
+      if (!Array.isArray(list) || list.length === 0) {
+        break;
+      }
+
+      for (const item of list) {
+        if (isUsdtTransfer(item)) {
+          console.debug("USDT transfer", item);
+        }
+      }
+
+      results = results.concat(list);
+      start += list.length;
     }
 
-    results = results.concat(list);
-    start += list.length;
+    return results;
+  };
+
+  const isProxy = sourceLabel.toLowerCase().includes("proxy");
+  const primaryPath = isProxy ? CONFIG.PROXY_TRANSFERS_PATH : CONFIG.TRANSFERS_PATH;
+  const fallbackPath = isProxy ? CONFIG.PROXY_TRANSFERS_PATH : CONFIG.FALLBACK_PATH;
+
+  let transfers = await runScan(
+    {
+      mode: CONFIG.PRIMARY_QUERY_MODE,
+      confirm: true,
+      path: primaryPath,
+    },
+    "primary"
+  );
+
+  if (transfers.length === 0 && fallbackPath) {
+    transfers = await runScan(
+      {
+        mode: CONFIG.FALLBACK_QUERY_MODE,
+        confirm: CONFIG.FALLBACK_CONFIRM,
+        path: fallbackPath,
+      },
+      "fallback"
+    );
   }
 
-  return results;
+  return { transfers, status: lastStatus };
 }
 
 async function fetchTransfers() {
   const directBase = getBaseByMode("direct");
   const proxyBase = getBaseByMode("proxy");
   let lastError = null;
+  let lastStatus = null;
 
   const tryFetch = async (base, label) => {
     if (!base) {
+      recordAttempt({
+        source: label,
+        url: "(base not configured)",
+        status: 0,
+        records: 0,
+        error: "Proxy base not configured",
+      });
       const err = new Error("Proxy base not configured");
       err.status = 0;
       throw err;
     }
-    const transfers = await fetchTransfersFromBase(base);
-    return { transfers, source: label };
+    const result = await fetchTransfersFromBase(base, label);
+    lastStatus = result.status;
+    return { transfers: result.transfers, source: label, status: result.status };
   };
 
   if (CONFIG.API_MODE === "proxy") {
@@ -365,6 +683,13 @@ async function fetchTransfers() {
       return await tryFetch(proxyBase, "Proxy");
     } catch (error) {
       lastError = error;
+      if (directBase) {
+        try {
+          return await tryFetch(directBase, "Direct Tronscan API");
+        } catch (fallbackError) {
+          lastError = fallbackError;
+        }
+      }
     }
   } else {
     try {
@@ -381,11 +706,14 @@ async function fetchTransfers() {
     }
   }
 
-  throw lastError || new Error("Unable to fetch transfers");
+  const err = lastError || new Error("Unable to fetch transfers");
+  err.status = lastStatus || err.status;
+  throw err;
 }
 
 function filterIncoming(transfers) {
   return transfers.filter((item) => {
+    if (!isUsdtTransfer(item)) return false;
     if (!isConfirmedTransfer(item)) return false;
     return isIncomingTransfer(item);
   });
@@ -393,6 +721,7 @@ function filterIncoming(transfers) {
 
 function prepareDonations(transfers) {
   const incoming = filterIncoming(transfers);
+  state.diagnostics.notes = [];
 
   let decimals = state.decimals;
   if (decimals === null) {
@@ -406,20 +735,35 @@ function prepareDonations(transfers) {
     if (decimals === null) {
       // Fallback to 6 decimals for USDT if API does not provide decimals.
       decimals = 6;
+      state.diagnostics.notes.push("Token decimals missing; defaulted to 6.");
     }
     state.decimals = decimals;
   }
 
-  const donations = incoming.map((item) => {
+  const donations = [];
+  for (const item of incoming) {
     const rawAmount = parseRawAmount(item);
+    if (rawAmount === null || rawAmount === undefined) {
+      state.diagnostics.notes.push("Skipped transfer with missing amount.");
+      continue;
+    }
     const amount = convertAmount(rawAmount, decimals);
-    return {
+    if (!Number.isFinite(amount)) {
+      state.diagnostics.notes.push("Skipped transfer with invalid amount.");
+      continue;
+    }
+    const tx = getTxId(item);
+    if (!tx) {
+      state.diagnostics.notes.push("Skipped transfer with missing tx hash.");
+      continue;
+    }
+    donations.push({
       amount,
       timestamp: parseTimestamp(item),
-      tx: getTxId(item),
+      tx,
       from: getFromAddress(item),
-    };
-  });
+    });
+  }
 
   donations.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
@@ -444,7 +788,7 @@ function renderDonations(donations) {
     row.className = "table-row";
 
     const fromText = CONFIG.SHOW_DONOR_ADDRESSES ? shortAddress(item.from) : "Anonymous";
-    const fromLink = item.from ? buildWalletUrl().replace(CONFIG.TRON_ADDRESS, item.from) : "#";
+    const fromLink = item.from ? buildWalletUrlFor(item.from) : "#";
 
     row.innerHTML = `
       <span>${formatUSDT(item.amount)} USDT</span>
@@ -480,7 +824,7 @@ function renderLiveFeed(donations, hasError) {
     row.className = "feed-item";
 
     const fromText = CONFIG.SHOW_DONOR_ADDRESSES ? shortAddress(item.from) : "Anonymous";
-    const fromLink = item.from ? buildWalletUrl().replace(CONFIG.TRON_ADDRESS, item.from) : "#";
+    const fromLink = item.from ? buildWalletUrlFor(item.from) : "#";
     const timeText = timeAgo(item.timestamp);
 
     const txLabel = item.tx ? shortTx(item.tx) : "TX";
@@ -501,6 +845,7 @@ function updateLastUpdated() {
 }
 
 function updateDelayWarning(transfers, donations, latestTx) {
+  if (!elements.tronscanDelay) return;
   if (!Array.isArray(transfers) || transfers.length === 0) {
     elements.tronscanDelay.hidden = true;
     return;
@@ -511,7 +856,9 @@ function updateDelayWarning(transfers, donations, latestTx) {
     return;
   }
 
-  elements.delayWalletLink.href = buildWalletUrl();
+  if (elements.delayWalletLink) {
+    elements.delayWalletLink.href = buildWalletUrl();
+  }
   let latestTransfer = null;
   for (const item of transfers) {
     const ts = parseTimestamp(item) || 0;
@@ -521,48 +868,72 @@ function updateDelayWarning(transfers, donations, latestTx) {
   }
 
   const txToShow = latestTx || latestTransfer?.tx;
-  elements.delayTxLink.textContent = txToShow ? `Latest tx ${shortTx(txToShow)}` : "Latest tx";
+  if (elements.delayTxLink) {
+    elements.delayTxLink.textContent = txToShow ? `Latest tx ${shortTx(txToShow)}` : "Latest tx";
 
-  if (txToShow) {
-    elements.delayTxLink.href = buildTxUrl(txToShow);
-    elements.delayTxLink.classList.remove("disabled");
-    elements.delayTxLink.setAttribute("aria-disabled", "false");
-  } else {
-    elements.delayTxLink.href = "#";
-    elements.delayTxLink.classList.add("disabled");
-    elements.delayTxLink.setAttribute("aria-disabled", "true");
+    if (txToShow) {
+      elements.delayTxLink.href = buildTxUrl(txToShow);
+      elements.delayTxLink.classList.remove("disabled");
+      elements.delayTxLink.setAttribute("aria-disabled", "false");
+    } else {
+      elements.delayTxLink.href = "#";
+      elements.delayTxLink.classList.add("disabled");
+      elements.delayTxLink.setAttribute("aria-disabled", "true");
+    }
   }
 
   elements.tronscanDelay.hidden = false;
 }
 
 async function refresh() {
+  state.diagnostics.attempts = [];
+  state.diagnostics.notes = [];
+  state.diagnostics.lastFetch = new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC";
   try {
     showErrorBanner("");
-    const { transfers, source } = await fetchTransfers();
+    showProxyBanner(CONFIG.API_MODE === "proxy" && !CONFIG.PROXY_BASE);
+    const { transfers, source, status } = await fetchTransfers();
     const { donations, totalRaised } = prepareDonations(transfers);
     const latestTx = donations[0]?.tx;
+    const knownTx = getKnownTxHashes()[0] || "";
 
     updateProgress(totalRaised);
     renderDonations(donations);
     renderLiveFeed(donations, false);
-    updateDelayWarning(transfers, donations, latestTx);
-    setLatestTxLink(latestTx);
+    updateDelayWarning(transfers, donations, latestTx || knownTx);
+    updateKnownTxNotice(transfers, false);
+    setLatestTxState(latestTx, donations.length ? "" : "No donations detected from API");
     setDataSource(source);
     updateLastUpdated();
+    state.diagnostics.httpStatus = status ? `HTTP ${status}` : "-";
+    state.diagnostics.records = transfers.length;
+    state.diagnostics.incoming = donations.length;
+    state.diagnostics.error = "";
+    updateDiagnosticsUI();
   } catch (error) {
     const status = error?.status;
     const statusNote = status ? ` (HTTP ${status})` : "";
     const corsNote = error?.name === "TypeError" && !status ? " (CORS blocked)" : "";
-    showErrorBanner(`Live data may be delayed or rate-limited. Verify on Tronscan.${statusNote}${corsNote}`);
+    const detail = error?.message ? ` Details: ${error.message}` : "";
+    showErrorBanner(`Live data may be delayed or rate-limited. Verify on Tronscan.${statusNote}${corsNote}${detail}`);
+    if (!CONFIG.PROXY_BASE) {
+      showProxyBanner(true);
+    }
     renderLiveFeed([], true);
     updateDelayWarning([], [], null);
-    setLatestTxLink(null);
+    updateKnownTxNotice([], true);
+    setLatestTxState(null, "API unavailable");
     setDataSource("Unavailable");
+    state.diagnostics.httpStatus = status ? `HTTP ${status}` : "-";
+    state.diagnostics.records = 0;
+    state.diagnostics.incoming = 0;
+    state.diagnostics.error = error?.message || "Unknown error";
+    updateDiagnosticsUI();
   }
 }
 
 function setupCopy() {
+  if (!elements.copyButton) return;
   elements.copyButton.addEventListener("click", async () => {
     try {
       await navigator.clipboard.writeText(CONFIG.TRON_ADDRESS);
@@ -577,6 +948,7 @@ function setupCopy() {
 }
 
 function setupQr() {
+  if (!elements.qrCanvas) return;
   const qr = qrcode(0, "M");
   qr.addData(CONFIG.TRON_ADDRESS);
   qr.make();
@@ -607,18 +979,72 @@ function setupQr() {
 }
 
 function init() {
+  if (!elements.addressText) return;
   elements.addressText.textContent = CONFIG.TRON_ADDRESS;
-  elements.verifyWalletBtn.href = buildWalletUrl();
-  elements.refreshSeconds.textContent = String(CONFIG.REFRESH_SECONDS);
-  elements.feedRefreshSeconds.textContent = String(CONFIG.REFRESH_SECONDS);
+  if (elements.verifyWalletBtn) {
+    elements.verifyWalletBtn.href = buildWalletUrl();
+    elements.verifyWalletBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      openInNewTab(buildWalletUrl(), elements.verifyWalletBtn);
+    });
+  }
+  if (elements.latestTxBtn) {
+    elements.latestTxBtn.href = "#";
+    elements.latestTxBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      if (elements.latestTxBtn.getAttribute("aria-disabled") === "true") return;
+      openInNewTab(state.latestIncomingTxUrl, elements.latestTxBtn);
+    });
+  }
+  if (elements.knownTxButton) {
+    elements.knownTxButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      const tx = elements.knownTxButton.dataset.tx || getKnownTxHashes()[0];
+      if (tx) {
+        openInNewTab(buildTxUrl(tx), elements.knownTxButton);
+      }
+    });
+  }
+  if (elements.diagnosticsToggle && elements.diagnosticsPanel) {
+    elements.diagnosticsToggle.addEventListener("click", () => {
+      const isHidden = elements.diagnosticsPanel.hidden;
+      elements.diagnosticsPanel.hidden = !isHidden;
+      elements.diagnosticsToggle.setAttribute("aria-expanded", String(isHidden));
+    });
+  }
+  if (elements.copyDiagnostics) {
+    elements.copyDiagnostics.addEventListener("click", async () => {
+      try {
+        await copyDiagnosticsToClipboard();
+        elements.copyDiagnostics.textContent = "Copied";
+        setTimeout(() => {
+          elements.copyDiagnostics.textContent = "Copy diagnostics";
+        }, 1200);
+      } catch {
+        elements.copyDiagnostics.textContent = "Copy diagnostics";
+      }
+    });
+  }
+  if (elements.debugLink) {
+    elements.debugLink.hidden = !shouldShowDebugLink();
+  }
+  if (elements.refreshSeconds) {
+    elements.refreshSeconds.textContent = String(CONFIG.REFRESH_SECONDS);
+  }
+  if (elements.feedRefreshSeconds) {
+    elements.feedRefreshSeconds.textContent = String(CONFIG.REFRESH_SECONDS);
+  }
   setDataSource(CONFIG.API_MODE === "proxy" ? "Proxy" : "Direct Tronscan API");
-  setLatestTxLink(null);
+  setLatestTxState(null, "No donations detected from API");
+  showProxyBanner(CONFIG.API_MODE === "proxy" && !CONFIG.PROXY_BASE);
   updateDeadline();
   updateProgress(0);
   setupCopy();
   setupQr();
 
-  elements.refreshButton.addEventListener("click", refresh);
+  if (elements.refreshButton) {
+    elements.refreshButton.addEventListener("click", refresh);
+  }
 
   refresh();
   setInterval(refresh, CONFIG.REFRESH_SECONDS * 1000);
@@ -1349,4 +1775,4 @@ for (let i = 0; i < 255; i += 1) {
   QRUtil.LOG_TABLE[QRUtil.EXP_TABLE[i]] = i;
 }
 
-init();
+document.addEventListener("DOMContentLoaded", init);
