@@ -10,7 +10,7 @@
     "https://apilist.tronscan.org",
   ],
   API_MODE: "proxy",
-  PROXY_BASE: "https://<PASTE_WORKER_URL_HERE>",
+  PROXY_BASE: "https://ethnova-tronscan-proxy.jemc787.workers.dev",
   TRANSFERS_PATH: "/api/token_trc20/transfers",
   FALLBACK_PATH: "/api/token_trc20/transfers",
   PROXY_TRANSFERS_PATH: "/trc20/transfers",
@@ -1849,3 +1849,4 @@ for (let i = 0; i < 255; i += 1) {
 }
 
 document.addEventListener("DOMContentLoaded", init);
+

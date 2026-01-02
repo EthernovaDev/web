@@ -5,8 +5,8 @@
     "https://apilist.tronscanapi.com",
     "https://apilist.tronscan.org",
   ],
-  PROXY_BASE: "https://<PASTE_WORKER_URL_HERE>",
-  API_MODE: "direct",
+  PROXY_BASE: "https://ethnova-tronscan-proxy.jemc787.workers.dev",
+  API_MODE: "proxy",
   MAX_TX_SCAN: 500,
 };
 
