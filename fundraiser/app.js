@@ -61,6 +61,7 @@ const elements = {
   knownTxButton: $("btnKnownTx"),
   diagnosticsToggle: $("diagnosticsToggle"),
   diagnosticsPanel: $("diagnosticsPanel"),
+  heartbeat: $("heartbeat"),
   diagSource: $("diagSource"),
   diagBase: $("diagBase"),
   diagBuild: $("diagBuild"),
@@ -83,6 +84,7 @@ const state = {
   deadline: null,
   latestIncomingTxHash: "",
   latestIncomingTxUrl: "",
+  refreshTick: 0,
   diagnostics: {
     source: "Proxy",
     base: CONFIG.PROXY_BASE,
@@ -168,6 +170,11 @@ function formatChicago(date, withTime) {
 
 function nowChicago() {
   return formatChicago(new Date(), true);
+}
+
+function setHeartbeat(message) {
+  if (!elements.heartbeat) return;
+  elements.heartbeat.textContent = message;
 }
 
 function timeAgo(ts) {
@@ -947,6 +954,8 @@ function updateDelayWarning(transfers, donations, latestTx) {
 }
 
 async function refresh() {
+  state.refreshTick += 1;
+  setHeartbeat(`refresh tick #${state.refreshTick} @ ${nowChicago()}`);
   state.diagnostics.attempts = [];
   state.diagnostics.notes = [];
   state.diagnostics.query = "running";
@@ -1000,6 +1009,7 @@ async function refresh() {
     updateDataRecords(state.diagnostics.records);
     state.diagnostics.error = "";
   } catch (error) {
+    console.error("[fundraiser] refresh error", error);
     const status = error?.status;
     const statusNote = status ? ` (HTTP ${status})` : "";
     const corsNote = error?.name === "TypeError" && !status ? " (CORS blocked)" : "";
@@ -1891,10 +1901,12 @@ function boot() {
   try {
     initConfig();
     setDiagnostics("booted");
+    setHeartbeat(`boot ok @ ${nowChicago()}`);
     refresh();
     clearInterval(window.__fundraiserTimer);
     window.__fundraiserTimer = setInterval(refresh, CONFIG.REFRESH_SECONDS * 1000);
   } catch (error) {
+    console.error("[fundraiser] boot error", error);
     state.diagnostics.error = error?.message || String(error);
     state.diagnostics.httpStatus = "error";
     updateDiagnosticsUI();

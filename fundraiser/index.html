@@ -84,7 +84,7 @@
         <div class="tiny" id="latestTxCaption">Latest: none</div>
           <div class="tiny">
             <span id="dataSource">Source: Proxy</span>
-            <span aria-hidden="true"> Ã¢â‚¬Â¢ </span>
+            <span aria-hidden="true"> ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ </span>
             <span id="dataRecords">Records: 0</span>
           </div>
         <div class="mini-feed">
@@ -99,9 +99,10 @@
           TronScan API indexing delay: the tx is visible on Tronscan UI but not returned by API yet.
           <button class="btn" id="btnKnownTx" type="button">Open known tx on Tronscan</button>
         </div>
-        <div class="diagnostics">
-          <button class="btn" id="diagnosticsToggle" type="button" aria-expanded="false">Diagnostics</button>
-          <div class="diagnostics-panel" id="diagnosticsPanel" hidden>
+          <div class="diagnostics">
+            <button class="btn" id="diagnosticsToggle" type="button" aria-expanded="false">Diagnostics</button>
+            <div class="tiny" id="heartbeat">Heartbeat: pending</div>
+            <div class="diagnostics-panel" id="diagnosticsPanel" hidden>
             <div class="diag-grid">
               <div class="diag-row"><span class="diag-label">Source</span><span id="diagSource">Proxy</span></div>
               <div class="diag-row"><span class="diag-label">Base</span><span id="diagBase">https://ethnova-tronscan-proxy.jemc787.workers.dev</span></div>
@@ -171,7 +172,7 @@
 
   <footer class="site-footer">
     <div class="container footer">
-      <span>Ã‚Â© 2026 Ethernova. All rights reserved.</span>
+      <span>Ãƒâ€šÃ‚Â© 2026 Ethernova. All rights reserved.</span>
       <div class="footer-links">
         <a href="/">Home</a>
         <a href="/stats.html">Network Stats</a>
@@ -180,7 +181,7 @@
     </div>
   </footer>
 
-  <script src="./app.js?v=20260102-bootfix-1" defer></script>
+  <script src="./app.js?v=20260102-heartbeat-1" defer></script>
 </body>
 </html>
 
