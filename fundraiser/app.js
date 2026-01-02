@@ -14,6 +14,8 @@
   DONATIONS_LIST_LIMIT: 25,
 };
 
+const FEED_LIMIT = 8;
+
 const $ = (id) => document.getElementById(id);
 
 const elements = {
@@ -32,8 +34,11 @@ const elements = {
   corsBanner: $("corsBanner"),
   lastUpdated: $("lastUpdated"),
   refreshSeconds: $("refreshSeconds"),
+  feedRefreshSeconds: $("feedRefreshSeconds"),
   donationsList: $("donationsList"),
   donationEmpty: $("donationEmpty"),
+  feedList: $("feedList"),
+  feedEmpty: $("feedEmpty"),
   refreshButton: $("refreshButton"),
 };
 
@@ -71,6 +76,20 @@ function formatDateUtc(ts) {
   const d = new Date(ts);
   if (Number.isNaN(d.getTime())) return "-";
   return d.toISOString().replace("T", " ").slice(0, 16) + " UTC";
+}
+
+function timeAgo(ts) {
+  if (!ts) return "-";
+  const diffMs = Date.now() - ts;
+  if (!Number.isFinite(diffMs)) return "-";
+  const diffSec = Math.max(0, Math.floor(diffMs / 1000));
+  if (diffSec < 60) return "just now";
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHours = Math.floor(diffMin / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays}d ago`;
 }
 
 function getDeadline() {
@@ -310,6 +329,36 @@ function renderDonations(donations) {
   }
 }
 
+function renderLiveFeed(donations) {
+  const list = donations.slice(0, FEED_LIMIT);
+  elements.feedList.innerHTML = "";
+
+  if (list.length === 0) {
+    elements.feedEmpty.style.display = "block";
+    return;
+  }
+
+  elements.feedEmpty.style.display = "none";
+
+  for (const item of list) {
+    const row = document.createElement("div");
+    row.className = "feed-item";
+
+    const fromText = CONFIG.SHOW_DONOR_ADDRESSES ? shortAddress(item.from) : "Anonymous";
+    const fromLink = item.from ? buildWalletUrl().replace(CONFIG.TRON_ADDRESS, item.from) : "#";
+    const timeText = timeAgo(item.timestamp);
+
+    row.innerHTML = `
+      <span class="feed-amount">${formatUSDT(item.amount)} USDT</span>
+      <a class="feed-from" href="${fromLink}" target="_blank" rel="noopener">${fromText}</a>
+      <span class="feed-time">${timeText}</span>
+      <a class="feed-link" href="${buildTxUrl(item.tx)}" target="_blank" rel="noopener">TX</a>
+    `;
+
+    elements.feedList.appendChild(row);
+  }
+}
+
 function updateLastUpdated() {
   const now = new Date();
   elements.lastUpdated.textContent = now.toISOString().replace("T", " ").slice(0, 16) + " UTC";
@@ -323,9 +372,11 @@ async function refresh() {
 
     updateProgress(totalRaised);
     renderDonations(donations);
+    renderLiveFeed(donations);
     updateLastUpdated();
   } catch (error) {
     showCorsWarning(true);
+    renderLiveFeed([]);
   }
 }
 
@@ -377,6 +428,7 @@ function init() {
   elements.addressText.textContent = CONFIG.TRON_ADDRESS;
   elements.verifyWalletBtn.href = buildWalletUrl();
   elements.refreshSeconds.textContent = String(CONFIG.REFRESH_SECONDS);
+  elements.feedRefreshSeconds.textContent = String(CONFIG.REFRESH_SECONDS);
   updateDeadline();
   updateProgress(0);
   setupCopy();

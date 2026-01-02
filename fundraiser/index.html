@@ -80,6 +80,14 @@
         <div class="button-row">
           <a class="btn primary" id="verifyWalletBtn" href="#" target="_blank" rel="noopener">Verify wallet on Tronscan</a>
         </div>
+        <div class="mini-feed">
+          <div class="mini-feed-header">
+            <div class="feed-title">Live Donations</div>
+            <div class="tiny">Updates every <span id="feedRefreshSeconds">-</span>s</div>
+          </div>
+          <div id="feedList" class="feed-list"></div>
+          <div class="tiny" id="feedEmpty">No donations yet. Be the first to support the listing fee!</div>
+        </div>
         <div class="cors-banner" id="corsBanner" hidden>
           Live data temporarily unavailable (CORS). Please verify on Tronscan via the wallet link.
         </div>
