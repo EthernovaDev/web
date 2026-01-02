@@ -91,10 +91,6 @@
           <div id="feedList" class="feed-list"></div>
           <div class="tiny" id="feedEmpty">No donations yet. Be the first to support the listing fee!</div>
         </div>
-        <div class="known-notice" id="knownTxNotice" hidden>
-          TronScan API indexing delay: the tx is visible on Tronscan UI but not returned by API yet.
-          <button class="btn" id="btnKnownTx" type="button">Open known tx on Tronscan</button>
-        </div>
           <div class="diagnostics">
             <button class="btn" id="diagnosticsToggle" type="button" aria-expanded="false">Diagnostics</button>
             <div id="heartbeat" class="heartbeat">Heartbeat: (starting...)</div>
@@ -119,12 +115,6 @@
             </div>
             <pre class="diag-attempts" id="diagAttempts"></pre>
           </div>
-        </div>
-        <div class="warning-banner" id="tronscanDelay" hidden>
-          Live data may be delayed by Tronscan indexing. Please verify recent donations on Tronscan.
-          <a id="delayWalletLink" href="#" target="_blank" rel="noopener noreferrer">Verify wallet</a>
-          <span class="divider">|</span>
-          <a id="delayTxLink" href="#" target="_blank" rel="noopener noreferrer">Latest tx</a>
         </div>
         <div class="cors-banner" id="proxyBanner" hidden>
           Proxy not configured. Live API may fail due to TronScan API key/rate limits.
