@@ -931,39 +931,35 @@ async function refresh() {
   state.diagnostics.attempts = [];
   state.diagnostics.notes = [];
   state.diagnostics.lastFetch = new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC";
+  state.diagnostics.query = "running";
+  state.diagnostics.httpStatus = "pending";
+  state.diagnostics.records = 0;
+  state.diagnostics.incoming = 0;
+  state.diagnostics.error = "none";
   updateLastUpdated();
+  updateDataRecords(0);
+  updateDiagnosticsUI();
+
+  let configError = "";
   if (!CONFIG.TRON_ADDRESS) {
-    showErrorBanner("Fatal: wallet address missing in config. Live data disabled.");
-    showProxyBanner(true);
-    setDataSource("Proxy", "not configured");
-    updateDataRecords(0);
-    updateProgress(0);
-    renderDonations([]);
-    renderMiniFeed([], true);
-    state.diagnostics.httpStatus = "-";
-    state.diagnostics.records = 0;
-    state.diagnostics.incoming = 0;
+    configError = "Fatal: wallet address missing in config. Live data disabled.";
     state.diagnostics.error = "Missing TRON_ADDRESS in config.";
-    updateDiagnosticsUI();
-    return;
   }
   if (!isProxyConfigured()) {
-    showErrorBanner("Proxy not configured — live donations cannot load. Configure PROXY_BASE.");
+    configError = "Proxy not configured — live donations cannot load. Configure PROXY_BASE.";
+    state.diagnostics.error = "Proxy base not configured.";
+  }
+  if (configError) {
+    showErrorBanner(configError);
     showProxyBanner(true);
     setDataSource("Proxy", "not configured");
-    updateDataRecords(0);
     updateProgress(0);
     renderDonations([]);
     renderMiniFeed([], true);
-    state.diagnostics.httpStatus = "-";
-    state.diagnostics.records = 0;
-    state.diagnostics.incoming = 0;
-    state.diagnostics.error = "Proxy base not configured.";
-    updateDiagnosticsUI();
-    return;
+  } else {
+    showErrorBanner("");
   }
   try {
-    showErrorBanner("");
     showProxyBanner(!isProxyConfigured());
     const { transfers, source, status, base } = await fetchTransfers();
     const isProxySource = source === "Proxy";
@@ -978,11 +974,12 @@ async function refresh() {
     updateKnownTxNotice(transfers, false);
     setLatestTxState(latestTx, donations.length ? "" : "No donations detected from API");
     setDataSource(source, base || "not configured");
-    state.diagnostics.httpStatus = status ? `HTTP ${status}` : "-";
+    state.diagnostics.httpStatus = status ? `HTTP ${status}` : "pending";
     state.diagnostics.records = transfers.length;
     state.diagnostics.incoming = donations.length;
     updateDataRecords(state.diagnostics.records);
     state.diagnostics.error = "";
+    state.diagnostics.query = "done";
     updateDiagnosticsUI();
   } catch (error) {
     const status = error?.status;
@@ -1010,12 +1007,13 @@ async function refresh() {
     updateKnownTxNotice([], true);
     setLatestTxState(null, "API unavailable");
     setDataSource("Proxy", getProxyBase() || "not configured");
-    state.diagnostics.httpStatus = status ? `HTTP ${status}` : "-";
+    state.diagnostics.httpStatus = status ? `HTTP ${status}` : "ERROR";
     state.diagnostics.records = 0;
     state.diagnostics.incoming = 0;
     updateDataRecords(0);
     const snippetText = upstreamSnippet ? ` Upstream: ${upstreamSnippet}` : "";
     state.diagnostics.error = `${error?.message || "Unknown error"}${snippetText}${hint}`;
+    state.diagnostics.query = "done";
     updateDiagnosticsUI();
   }
 }
@@ -1067,14 +1065,15 @@ function setupQr() {
 }
 
 function init() {
-  if (!elements.addressText) return;
   console.log("[fundraiser] API_MODE =", CONFIG.API_MODE, "PROXY_BASE =", CONFIG.PROXY_BASE);
   if (!CONFIG.TRON_ADDRESS) {
     showErrorBanner("Fatal: wallet address missing in config. Live data disabled.");
     state.diagnostics.error = "Missing TRON_ADDRESS in config.";
     updateDiagnosticsUI();
   }
-  elements.addressText.textContent = CONFIG.TRON_ADDRESS || "Address missing";
+  if (elements.addressText) {
+    elements.addressText.textContent = CONFIG.TRON_ADDRESS || "Address missing";
+  }
   if (elements.verifyWalletBtn) {
     elements.verifyWalletBtn.href = buildWalletUrl();
   }
@@ -1144,9 +1143,6 @@ function init() {
   if (elements.refreshButton) {
     elements.refreshButton.addEventListener("click", refresh);
   }
-
-  refresh();
-  setInterval(refresh, CONFIG.REFRESH_SECONDS * 1000);
 }
 
 /* QR Code generator (MIT License) based on qrcode-generator by Kazuhiko Arase. */
@@ -1874,5 +1870,9 @@ for (let i = 0; i < 255; i += 1) {
   QRUtil.LOG_TABLE[QRUtil.EXP_TABLE[i]] = i;
 }
 
-document.addEventListener("DOMContentLoaded", init);
+document.addEventListener("DOMContentLoaded", () => {
+  init();
+  refresh();
+  setInterval(refresh, CONFIG.REFRESH_SECONDS * 1000);
+});
 
