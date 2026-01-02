@@ -459,6 +459,12 @@ a:hover {
   color: var(--muted);
 }
 
+.heartbeat {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-top: 0.5rem;
+}
+
 .deadline-warning {
   padding: 10px 12px;
   border-radius: 10px;

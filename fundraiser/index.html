@@ -76,6 +76,7 @@
         <div class="qr-wrap">
           <canvas id="qrCanvas" aria-label="Donation address QR code"></canvas>
         </div>
+          <div class="tiny" id="qrStatus" hidden>QR temporarily unavailable - copy address manually.</div>
         <div class="tiny">Keep a small amount of TRX in your wallet for network fees.</div>
         <div class="button-row">
           <a class="btn primary" id="btnVerifyWallet" href="https://tronscan.org/#/address/TVYT4XtYtnBEg5VnKNUnx1n8oUeZ8mq2Lg" target="_blank" rel="noopener noreferrer">Verify wallet on Tronscan</a>
@@ -84,7 +85,7 @@
         <div class="tiny" id="latestTxCaption">Latest: none</div>
           <div class="tiny">
             <span id="dataSource">Source: Proxy</span>
-            <span aria-hidden="true"> ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ </span>
+            <span aria-hidden="true"> | </span>
             <span id="dataRecords">Records: 0</span>
           </div>
         <div class="mini-feed">
@@ -106,11 +107,11 @@
             <div class="diag-grid">
               <div class="diag-row"><span class="diag-label">Source</span><span id="diagSource">Proxy</span></div>
               <div class="diag-row"><span class="diag-label">Base</span><span id="diagBase">https://ethnova-tronscan-proxy.jemc787.workers.dev</span></div>
-<div class="diag-row"><span class="diag-label">Build</span><span id="diagBuild">20260102-bootfix-1</span></div>
+<div class="diag-row"><span class="diag-label">Build</span><span id="diagBuild">20260102-qrfix-1</span></div>
               <div class="diag-row"><span class="diag-label">Query</span><span id="diagQuery">pending</span></div>
               <div class="diag-row"><span class="diag-label">Confirm</span><span id="diagConfirm">0</span></div>
-              <div class="diag-row"><span class="diag-label">Last fetch</span><span id="diagFetchTime">pending</span></div>
-              <div class="diag-row"><span class="diag-label">HTTP status</span><span id="diagStatus">pending</span></div>
+              <div class="diag-row"><span class="diag-label">Last fetch</span><span id="diagLastFetch">pending</span></div>
+              <div class="diag-row"><span class="diag-label">HTTP status</span><span id="diagHttpStatus">pending</span></div>
               <div class="diag-row"><span class="diag-label">Records</span><span id="diagRecords">0</span></div>
               <div class="diag-row"><span class="diag-label">Incoming matched</span><span id="diagIncoming">0</span></div>
               <div class="diag-row"><span class="diag-label">Latest incoming tx</span><a id="diagLatestTx" href="#" target="_blank" rel="noopener noreferrer">none</a></div>
@@ -172,7 +173,7 @@
 
   <footer class="site-footer">
     <div class="container footer">
-      <span>Ãƒâ€šÃ‚Â© 2026 Ethernova. All rights reserved.</span>
+      <span>ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â© 2026 Ethernova. All rights reserved.</span>
       <div class="footer-links">
         <a href="/">Home</a>
         <a href="/stats.html">Network Stats</a>
@@ -181,7 +182,7 @@
     </div>
   </footer>
 
-  <script src="./app.js?v=20260102-heartbeat-1" defer></script>
+  <script src="./app.js?v=20260102-qrfix-1" defer></script>
 </body>
 </html>
 

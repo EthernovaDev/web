@@ -17,7 +17,7 @@ const CONFIG = {
   KNOWN_TX_HASHES: ["9402383dc1754a3b487fb3483092e869754e2922016e262974852049b0295de2"],
 };
 
-const BUILD_ID = "20260102-bootfix-1";
+const BUILD_ID = "20260102-qrfix-1";
 
 if (typeof window !== "undefined") {
   window.FUNDRAISER_CONFIG = CONFIG;
@@ -32,6 +32,7 @@ const elements = {
   addressText: $("addressText"),
   copyButton: $("copyButton"),
   qrCanvas: $("qrCanvas"),
+  qrStatus: $("qrStatus"),
   verifyWalletBtn: $("btnVerifyWallet"),
   latestTxBtn: $("btnLatestTx"),
   latestTxCaption: $("latestTxCaption"),
@@ -68,8 +69,8 @@ const elements = {
   diagBuild: $("diagBuild"),
   diagQuery: $("diagQuery"),
   diagConfirm: $("diagConfirm"),
-  diagFetchTime: $("diagFetchTime"),
-  diagStatus: $("diagStatus"),
+  diagLastFetch: $("diagLastFetch"),
+  diagHttpStatus: $("diagHttpStatus"),
   diagRecords: $("diagRecords"),
   diagIncoming: $("diagIncoming"),
   diagLatestTx: $("diagLatestTx"),
@@ -318,8 +319,8 @@ function updateDiagnosticsUI() {
   setText("diagBase", state.diagnostics.base || "not configured");
   setText("diagQuery", state.diagnostics.query || "pending");
   setText("diagConfirm", state.diagnostics.confirm || "0");
-  setText("diagFetchTime", state.diagnostics.lastFetch || "pending");
-  setText("diagStatus", state.diagnostics.httpStatus || "pending");
+  setText("diagLastFetch", state.diagnostics.lastFetch || "pending");
+  setText("diagHttpStatus", state.diagnostics.httpStatus || "pending");
   setText("diagRecords", String(state.diagnostics.records ?? 0));
   setText("diagIncoming", String(state.diagnostics.incoming ?? 0));
   setText("diagLatestTx", state.diagnostics.latestTx || "none");
@@ -1168,12 +1169,29 @@ function initConfig() {
   updateDataRecords(0);
   updateLastUpdated();
   setupCopy();
-  setupQr();
+  try {
+    setupQr();
+    if (elements.qrStatus) {
+      elements.qrStatus.hidden = true;
+      elements.qrStatus.textContent = "";
+    }
+  } catch (error) {
+    console.error("QR generation failed:", error);
+    if (elements.qrStatus) {
+      elements.qrStatus.hidden = false;
+      elements.qrStatus.textContent = "QR temporarily unavailable - copy address manually.";
+    }
+    state.diagnostics.error = `QR disabled: ${error?.message || String(error)}`;
+    setText("diagError", state.diagnostics.error);
+  }
 
   if (elements.refreshButton) {
     elements.refreshButton.addEventListener("click", refresh);
   }
 }
+
+const PAD0 = 0xEC;
+const PAD1 = 0x11;
 
 /* QR Code generator (MIT License) based on qrcode-generator by Kazuhiko Arase. */
 function qrcode(typeNumber, errorCorrectionLevel) {
