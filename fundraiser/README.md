@@ -73,7 +73,7 @@ Do NOT commit your API key anywhere (no JS/HTML/README). The key must only live 
 Use these to validate the proxy after deploy:
 
 - `curl https://<worker-name>.<account>.workers.dev/health`
-- `curl "https://<worker-name>.<account>.workers.dev/trc20/transfers?start=0&limit=20&confirm=true&contract_address=TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj&relatedAddress=TVYT4XtYtnBEg5VnKNUnx1n8oUeZ8mq2Lg"`
+- `curl "https://<worker-name>.<account>.workers.dev/trc20/transfers?start=0&limit=20&confirm=0&direction=in&contract_address=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t&relatedAddress=TVYT4XtYtnBEg5VnKNUnx1n8oUeZ8mq2Lg"`
 
 ## Debugging
 The fundraiser page has a diagnostics panel and a dedicated debug page:

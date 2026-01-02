@@ -3,7 +3,7 @@
   GOAL_USDT: 3900,
   LAUNCH_DATE_UTC: "2026-01-01T00:00:00Z",
   DEADLINE_DAYS: 45,
-  USDT_CONTRACT_TRON: "TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj",
+  USDT_CONTRACT_TRON: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
   API_BASE: "https://apilist.tronscanapi.com",
   API_BASES: [
     "https://apilist.tronscanapi.com",

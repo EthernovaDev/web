@@ -1,6 +1,6 @@
 ﻿const CONFIG = {
   TRON_ADDRESS: "TVYT4XtYtnBEg5VnKNUnx1n8oUeZ8mq2Lg",
-  USDT_CONTRACT_TRON: "TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj",
+  USDT_CONTRACT_TRON: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
   API_BASES: [
     "https://apilist.tronscanapi.com",
     "https://apilist.tronscan.org",
