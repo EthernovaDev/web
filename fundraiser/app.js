@@ -329,11 +329,18 @@ function renderDonations(donations) {
   }
 }
 
-function renderLiveFeed(donations) {
+function renderLiveFeed(donations, hasError) {
   const list = donations.slice(0, FEED_LIMIT);
   elements.feedList.innerHTML = "";
 
+  if (hasError) {
+    elements.feedEmpty.textContent = "Live data temporarily unavailable. Please verify on Tronscan.";
+    elements.feedEmpty.style.display = "block";
+    return;
+  }
+
   if (list.length === 0) {
+    elements.feedEmpty.textContent = "No donations yet. Be the first to support the listing fee!";
     elements.feedEmpty.style.display = "block";
     return;
   }
@@ -372,11 +379,11 @@ async function refresh() {
 
     updateProgress(totalRaised);
     renderDonations(donations);
-    renderLiveFeed(donations);
+    renderLiveFeed(donations, false);
     updateLastUpdated();
   } catch (error) {
     showCorsWarning(true);
-    renderLiveFeed([]);
+    renderLiveFeed([], true);
   }
 }
 
