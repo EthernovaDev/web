@@ -5,7 +5,7 @@
     "https://apilist.tronscanapi.com",
     "https://apilist.tronscan.org",
   ],
-  PROXY_BASE: "",
+  PROXY_BASE: "https://<PASTE_WORKER_URL_HERE>",
   API_MODE: "direct",
   MAX_TX_SCAN: 500,
 };
@@ -16,6 +16,7 @@ const elements = {
   base1Url: $("base1Url"),
   base2Url: $("base2Url"),
   proxyUrl: $("proxyUrl"),
+  btnCopyProxy: $("btnCopyProxy"),
   btnFetchBase1: $("btnFetchBase1"),
   btnFetchBase2: $("btnFetchBase2"),
   btnFetchProxy: $("btnFetchProxy"),
@@ -58,7 +59,14 @@ function getApiBases() {
   return (CONFIG.API_BASES || []).map((base) => sanitizeBase(base)).filter(Boolean);
 }
 
-function createTransferUrl(base, start, limit, confirmValue) {
+function getProxyBase() {
+  const base = sanitizeBase(CONFIG.PROXY_BASE);
+  if (!base) return "";
+  if (base.includes("<PASTE_WORKER_URL_HERE>")) return "";
+  return base;
+}
+
+function createTransferUrl(base, start, limit, confirmValue, path) {
   const normalizedBase = sanitizeBase(base);
   const params = new URLSearchParams({
     start: String(start),
@@ -67,7 +75,8 @@ function createTransferUrl(base, start, limit, confirmValue) {
     contract_address: CONFIG.USDT_CONTRACT_TRON,
     relatedAddress: CONFIG.TRON_ADDRESS,
   });
-  return `${normalizedBase}/api/token_trc20/transfers?${params.toString()}`;
+  const finalPath = path || "/api/token_trc20/transfers";
+  return `${normalizedBase}${finalPath}?${params.toString()}`;
 }
 
 function looksLikeTransfer(item) {
@@ -247,7 +256,7 @@ async function readErrorBody(res) {
   }
 }
 
-async function fetchTransfersFromBase(base, sourceLabel) {
+async function fetchTransfersFromBase(base, sourceLabel, path) {
   const limit = 20;
   let start = 0;
   let total = Infinity;
@@ -256,7 +265,7 @@ async function fetchTransfersFromBase(base, sourceLabel) {
   let firstPayload = null;
 
   while (start < CONFIG.MAX_TX_SCAN && start < total) {
-    const url = createTransferUrl(base, start, limit, true);
+    const url = createTransferUrl(base, start, limit, true, path);
     let res;
     try {
       res = await fetch(url, { cache: "no-store" });
@@ -331,7 +340,7 @@ function formatSearchResult(item) {
   ].join("\n");
 }
 
-async function fetchAndRender(base, sourceLabel) {
+async function fetchAndRender(base, sourceLabel, path) {
   state.attempts = [];
   state.payload = null;
   state.transfers = [];
@@ -341,7 +350,7 @@ async function fetchAndRender(base, sourceLabel) {
   state.errorSnippet = "-";
 
   if (!base) {
-    state.errorSnippet = "Base not configured";
+    state.errorSnippet = sourceLabel === "Proxy" ? "Proxy base not configured" : "Base not configured";
     renderStatus("Error", sourceLabel);
     renderPayload();
     return;
@@ -350,7 +359,7 @@ async function fetchAndRender(base, sourceLabel) {
   renderStatus("Fetching...", sourceLabel);
 
   try {
-    const result = await fetchTransfersFromBase(base, sourceLabel);
+    const result = await fetchTransfersFromBase(base, sourceLabel, path);
     state.payload = result.payload;
     state.transfers = result.transfers;
     state.recordCount = result.transfers.length;
@@ -372,17 +381,18 @@ function updateUrls() {
   const bases = getApiBases();
   if (elements.base1Url) {
     elements.base1Url.textContent = bases[0]
-      ? createTransferUrl(bases[0], 0, 20, true)
+      ? createTransferUrl(bases[0], 0, 20, true, "/api/token_trc20/transfers")
       : "-";
   }
   if (elements.base2Url) {
     elements.base2Url.textContent = bases[1]
-      ? createTransferUrl(bases[1], 0, 20, true)
+      ? createTransferUrl(bases[1], 0, 20, true, "/api/token_trc20/transfers")
       : "-";
   }
   if (elements.proxyUrl) {
-    elements.proxyUrl.textContent = CONFIG.PROXY_BASE
-      ? createTransferUrl(CONFIG.PROXY_BASE, 0, 20, true)
+    const proxyBase = getProxyBase();
+    elements.proxyUrl.textContent = proxyBase
+      ? createTransferUrl(proxyBase, 0, 20, true, "/trc20/transfers")
       : "(not configured)";
   }
 }
@@ -421,13 +431,26 @@ function init() {
 
   const bases = getApiBases();
   elements.btnFetchBase1?.addEventListener("click", () => {
-    fetchAndRender(bases[0], "Base #1");
+    fetchAndRender(bases[0], "Base #1", "/api/token_trc20/transfers");
   });
   elements.btnFetchBase2?.addEventListener("click", () => {
-    fetchAndRender(bases[1], "Base #2");
+    fetchAndRender(bases[1], "Base #2", "/api/token_trc20/transfers");
   });
   elements.btnFetchProxy?.addEventListener("click", () => {
-    fetchAndRender(sanitizeBase(CONFIG.PROXY_BASE), "Proxy");
+    fetchAndRender(getProxyBase(), "Proxy", "/trc20/transfers");
+  });
+  elements.btnCopyProxy?.addEventListener("click", async () => {
+    const proxyBase = getProxyBase();
+    if (!proxyBase) return;
+    try {
+      await navigator.clipboard.writeText(proxyBase);
+      elements.btnCopyProxy.textContent = "Copied";
+      setTimeout(() => {
+        elements.btnCopyProxy.textContent = "Copy";
+      }, 1200);
+    } catch {
+      elements.btnCopyProxy.textContent = "Copy";
+    }
   });
   elements.btnSearchTx?.addEventListener("click", searchTx);
 }

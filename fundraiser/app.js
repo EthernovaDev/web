@@ -9,8 +9,8 @@
     "https://apilist.tronscanapi.com",
     "https://apilist.tronscan.org",
   ],
-  API_MODE: "direct",
-  PROXY_BASE: "",
+  API_MODE: "proxy",
+  PROXY_BASE: "https://<PASTE_WORKER_URL_HERE>",
   TRANSFERS_PATH: "/api/token_trc20/transfers",
   FALLBACK_PATH: "/api/token_trc20/transfers",
   PROXY_TRANSFERS_PATH: "/trc20/transfers",
@@ -118,9 +118,20 @@ function apiBase(base) {
 
 function getBaseByMode(mode) {
   if (mode === "proxy") {
-    return sanitizeBase(CONFIG.PROXY_BASE);
+    return getProxyBase();
   }
   return sanitizeBase(CONFIG.API_BASE);
+}
+
+function getProxyBase() {
+  const base = sanitizeBase(CONFIG.PROXY_BASE);
+  if (!base) return "";
+  if (base.includes("<PASTE_WORKER_URL_HERE>")) return "";
+  return base;
+}
+
+function isProxyConfigured() {
+  return Boolean(getProxyBase());
 }
 
 function getApiBases() {
@@ -948,7 +959,7 @@ async function refresh() {
   state.diagnostics.lastFetch = new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC";
   try {
     showErrorBanner("");
-    showProxyBanner(!CONFIG.PROXY_BASE);
+    showProxyBanner(!isProxyConfigured());
     const { transfers, source, status, base } = await fetchTransfers();
     const { donations, totalRaised } = prepareDonations(transfers);
     const latestTx = donations[0]?.tx;
@@ -973,7 +984,7 @@ async function refresh() {
     const corsNote = error?.name === "TypeError" && !status ? " (CORS blocked)" : "";
     const detail = error?.message ? ` Details: ${error.message}` : "";
     showErrorBanner(`Live data may be delayed or rate-limited. Verify on Tronscan.${statusNote}${corsNote}${detail}`);
-    if (!CONFIG.PROXY_BASE) {
+    if (!isProxyConfigured()) {
       showProxyBanner(true);
     }
     renderLiveFeed([], true);
@@ -1094,11 +1105,11 @@ function init() {
     elements.feedRefreshSeconds.textContent = String(CONFIG.REFRESH_SECONDS);
   }
   const initialBases = getApiBases();
-  const initialBase = CONFIG.API_MODE === "proxy" ? CONFIG.PROXY_BASE : initialBases[0];
+  const initialBase = CONFIG.API_MODE === "proxy" ? getProxyBase() : initialBases[0];
   const initialLabel = CONFIG.API_MODE === "proxy" ? "Proxy" : "Direct base #1";
   setDataSource(initialLabel, initialBase || "-");
   setLatestTxState(null, "No donations detected from API");
-  showProxyBanner(!CONFIG.PROXY_BASE);
+  showProxyBanner(!isProxyConfigured());
   updateDeadline();
   updateProgress(0);
   setupCopy();

@@ -1,23 +1,25 @@
 ﻿export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    const corsHeaders = {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Headers": "*",
+      "Cache-Control": "public, max-age=60",
+    };
 
     if (request.method === "OPTIONS") {
       return new Response(null, {
         status: 204,
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "GET, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type, TRON-PRO-API-KEY",
-        },
+        headers: corsHeaders,
       });
     }
 
     if (url.pathname !== "/trc20/transfers") {
-      return new Response(JSON.stringify({ error: "Not found" }), {
+      return new Response(JSON.stringify({ ok: false, status: 404, error: "Not found" }), {
         status: 404,
         headers: {
-          "Access-Control-Allow-Origin": "*",
+          ...corsHeaders,
           "Content-Type": "application/json",
         },
       });
@@ -34,11 +36,29 @@
 
     const body = await response.text();
 
+    if (!response.ok) {
+      const snippet = body ? body.replace(/\s+/g, " ").slice(0, 500) : "";
+      return new Response(
+        JSON.stringify({
+          ok: false,
+          status: response.status,
+          error: "Upstream error",
+          upstreamSnippet: snippet,
+        }),
+        {
+          status: response.status,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
     return new Response(body, {
       status: response.status,
       headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Cache-Control": "public, max-age=60",
+        ...corsHeaders,
         "Content-Type": response.headers.get("Content-Type") || "application/json",
       },
     });

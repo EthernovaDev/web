@@ -43,10 +43,29 @@ Use the included `worker/` folder to create a simple proxy that adds the TronSca
 
 - `cd worker`
 - `wrangler login`
+- `wrangler secret put TRONSCAN_API_KEY` (paste your TronScan API key when prompted)
 - `wrangler deploy`
-- `wrangler secret put TRONSCAN_API_KEY`
 - Copy the deployed Worker URL into `PROXY_BASE` in `fundraiser/app.js`.
 - Set `PROXY_TRANSFERS_PATH` to `/trc20/transfers` when using the worker.
+
+### Secure Deployment (copy/paste)
+Do NOT commit your API key anywhere (no JS/HTML/README). The key must only live in Wrangler secrets.
+
+1) Install Wrangler (if not installed):
+   `npm i -g wrangler`
+
+2) Authenticate:
+   `wrangler login`
+
+3) From the `worker/` folder, set the secret:
+   `wrangler secret put TRONSCAN_API_KEY`
+
+4) Deploy:
+   `wrangler deploy`
+
+5) Wrangler prints a Worker URL like:
+   `https://<worker-name>.<account>.workers.dev`
+   Paste it into `PROXY_BASE` in `fundraiser/app.js`.
 
 ## Debugging
 The fundraiser page has a diagnostics panel and a dedicated debug page:
