@@ -1,0 +1,6 @@
+﻿name = "ethnova-tronscan-proxy"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+# Set your API key with:
+# wrangler secret put TRONSCAN_API_KEY

@@ -5,9 +5,10 @@
   DEADLINE_DAYS: 45,
   USDT_CONTRACT_TRON: "TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj",
   API_BASE: "https://apilist.tronscanapi.com",
+  API_MODE: "direct",
+  PROXY_BASE: "",
   TRONSCAN_WALLET_URL: "https://tronscan.org/#/address/{ADDRESS}",
   TRONSCAN_TX_URL: "https://tronscan.org/#/transaction/{TX}",
-  OPTIONAL_PROXY_BASE: "",
   REFRESH_SECONDS: 60,
   MAX_TX_SCAN: 500,
   SHOW_DONOR_ADDRESSES: true,
@@ -23,6 +24,8 @@ const elements = {
   copyButton: $("copyButton"),
   qrCanvas: $("qrCanvas"),
   verifyWalletBtn: $("verifyWalletBtn"),
+  latestTxBtn: $("latestTxBtn"),
+  dataSource: $("dataSource"),
   goalValue: $("goalValue"),
   raisedValue: $("raisedValue"),
   remainingValue: $("remainingValue"),
@@ -60,8 +63,15 @@ function normalizeAddress(value) {
   return value.trim().toLowerCase();
 }
 
-function apiBase() {
-  return sanitizeBase(CONFIG.OPTIONAL_PROXY_BASE || CONFIG.API_BASE);
+function apiBase(base) {
+  return sanitizeBase(base);
+}
+
+function getBaseByMode(mode) {
+  if (mode === "proxy") {
+    return sanitizeBase(CONFIG.PROXY_BASE);
+  }
+  return sanitizeBase(CONFIG.API_BASE);
 }
 
 function formatUSDT(value) {
@@ -140,8 +150,33 @@ function updateProgress(totalRaised) {
   elements.progressFill.style.width = `${percent}%`;
 }
 
-function showCorsWarning(show) {
-  elements.corsBanner.hidden = !show;
+function showErrorBanner(message) {
+  if (!message) {
+    elements.corsBanner.hidden = true;
+    return;
+  }
+  elements.corsBanner.textContent = message;
+  elements.corsBanner.hidden = false;
+}
+
+function setDataSource(label) {
+  if (!elements.dataSource) return;
+  elements.dataSource.textContent = `Source: ${label}`;
+}
+
+function setLatestTxLink(tx) {
+  if (!elements.latestTxBtn) return;
+  if (tx) {
+    elements.latestTxBtn.href = buildTxUrl(tx);
+    elements.latestTxBtn.textContent = "Latest tx";
+    elements.latestTxBtn.classList.remove("disabled");
+    elements.latestTxBtn.setAttribute("aria-disabled", "false");
+  } else {
+    elements.latestTxBtn.href = "#";
+    elements.latestTxBtn.textContent = "Latest tx";
+    elements.latestTxBtn.classList.add("disabled");
+    elements.latestTxBtn.setAttribute("aria-disabled", "true");
+  }
 }
 
 function buildWalletUrl() {
@@ -152,8 +187,8 @@ function buildTxUrl(tx) {
   return CONFIG.TRONSCAN_TX_URL.replace("{TX}", tx);
 }
 
-function createTransferUrl(start, limit) {
-  const base = apiBase();
+function createTransferUrl(base, start, limit) {
+  const normalizedBase = apiBase(base);
   const params = new URLSearchParams({
     limit: String(limit),
     start: String(start),
@@ -162,7 +197,7 @@ function createTransferUrl(start, limit) {
     relatedAddress: CONFIG.TRON_ADDRESS,
     _: String(Date.now()),
   });
-  return `${base}/api/token_trc20/transfers?${params.toString()}`;
+  return `${normalizedBase}/api/token_trc20/transfers?${params.toString()}`;
 }
 
 function findDecimals(item) {
@@ -269,17 +304,19 @@ function convertAmount(raw, decimals) {
   return n / Math.pow(10, decimals);
 }
 
-async function fetchTransfers() {
+async function fetchTransfersFromBase(base) {
   const limit = 20;
   let start = 0;
   let total = Infinity;
   let results = [];
 
   while (start < CONFIG.MAX_TX_SCAN && start < total) {
-    const url = createTransferUrl(start, limit);
+    const url = createTransferUrl(base, start, limit);
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) {
-      throw new Error(`API error (${res.status})`);
+      const error = new Error(`API error (${res.status})`);
+      error.status = res.status;
+      throw error;
     }
     const data = await res.json();
     const list =
@@ -306,6 +343,45 @@ async function fetchTransfers() {
   }
 
   return results;
+}
+
+async function fetchTransfers() {
+  const directBase = getBaseByMode("direct");
+  const proxyBase = getBaseByMode("proxy");
+  let lastError = null;
+
+  const tryFetch = async (base, label) => {
+    if (!base) {
+      const err = new Error("Proxy base not configured");
+      err.status = 0;
+      throw err;
+    }
+    const transfers = await fetchTransfersFromBase(base);
+    return { transfers, source: label };
+  };
+
+  if (CONFIG.API_MODE === "proxy") {
+    try {
+      return await tryFetch(proxyBase, "Proxy");
+    } catch (error) {
+      lastError = error;
+    }
+  } else {
+    try {
+      return await tryFetch(directBase, "Direct Tronscan API");
+    } catch (error) {
+      lastError = error;
+      const shouldFallback =
+        error?.status === 403 ||
+        error?.status === 429 ||
+        error?.name === "TypeError";
+      if (shouldFallback && proxyBase) {
+        return await tryFetch(proxyBase, "Proxy");
+      }
+    }
+  }
+
+  throw lastError || new Error("Unable to fetch transfers");
 }
 
 function filterIncoming(transfers) {
@@ -424,7 +500,7 @@ function updateLastUpdated() {
   elements.lastUpdated.textContent = now.toISOString().replace("T", " ").slice(0, 16) + " UTC";
 }
 
-function updateDelayWarning(transfers, donations) {
+function updateDelayWarning(transfers, donations, latestTx) {
   if (!Array.isArray(transfers) || transfers.length === 0) {
     elements.tronscanDelay.hidden = true;
     return;
@@ -435,40 +511,54 @@ function updateDelayWarning(transfers, donations) {
     return;
   }
 
-  let latest = null;
+  elements.delayWalletLink.href = buildWalletUrl();
+  let latestTransfer = null;
   for (const item of transfers) {
     const ts = parseTimestamp(item) || 0;
-    if (!latest || ts > latest.ts) {
-      latest = { ts, tx: getTxId(item) };
+    if (!latestTransfer || ts > latestTransfer.ts) {
+      latestTransfer = { ts, tx: getTxId(item) };
     }
   }
 
-  elements.delayWalletLink.href = buildWalletUrl();
-  if (latest?.tx) {
-    elements.delayTxLink.href = buildTxUrl(latest.tx);
-    elements.delayTxLink.textContent = `Latest tx ${shortTx(latest.tx)}`;
+  const txToShow = latestTx || latestTransfer?.tx;
+  elements.delayTxLink.textContent = txToShow ? `Latest tx ${shortTx(txToShow)}` : "Latest tx";
+
+  if (txToShow) {
+    elements.delayTxLink.href = buildTxUrl(txToShow);
+    elements.delayTxLink.classList.remove("disabled");
+    elements.delayTxLink.setAttribute("aria-disabled", "false");
   } else {
-    elements.delayTxLink.href = buildWalletUrl();
-    elements.delayTxLink.textContent = "Latest tx";
+    elements.delayTxLink.href = "#";
+    elements.delayTxLink.classList.add("disabled");
+    elements.delayTxLink.setAttribute("aria-disabled", "true");
   }
+
   elements.tronscanDelay.hidden = false;
 }
 
 async function refresh() {
-  showCorsWarning(false);
   try {
-    const transfers = await fetchTransfers();
+    showErrorBanner("");
+    const { transfers, source } = await fetchTransfers();
     const { donations, totalRaised } = prepareDonations(transfers);
+    const latestTx = donations[0]?.tx;
 
     updateProgress(totalRaised);
     renderDonations(donations);
     renderLiveFeed(donations, false);
-    updateDelayWarning(transfers, donations);
+    updateDelayWarning(transfers, donations, latestTx);
+    setLatestTxLink(latestTx);
+    setDataSource(source);
     updateLastUpdated();
   } catch (error) {
-    showCorsWarning(true);
+    const status = error?.status;
+    const statusNote = status ? ` (HTTP ${status})` : "";
+    const corsNote = error?.name === "TypeError" && !status ? " (CORS blocked)" : "";
+    showErrorBanner(`Live data may be delayed or rate-limited. Verify on Tronscan.${statusNote}${corsNote}`);
     renderLiveFeed([], true);
-    updateDelayWarning([], []);
+    updateDelayWarning([], [], null);
+    setLatestTxLink(null);
+    setDataSource("Unavailable");
   }
 }
 
@@ -521,6 +611,8 @@ function init() {
   elements.verifyWalletBtn.href = buildWalletUrl();
   elements.refreshSeconds.textContent = String(CONFIG.REFRESH_SECONDS);
   elements.feedRefreshSeconds.textContent = String(CONFIG.REFRESH_SECONDS);
+  setDataSource(CONFIG.API_MODE === "proxy" ? "Proxy" : "Direct Tronscan API");
+  setLatestTxLink(null);
   updateDeadline();
   updateProgress(0);
   setupCopy();
