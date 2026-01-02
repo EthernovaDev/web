@@ -24,6 +24,7 @@ if (typeof window !== "undefined") {
 }
 
 const FEED_LIMIT = 8;
+let refreshTick = 0;
 
 const $ = (id) => document.getElementById(id);
 
@@ -84,7 +85,6 @@ const state = {
   deadline: null,
   latestIncomingTxHash: "",
   latestIncomingTxUrl: "",
-  refreshTick: 0,
   diagnostics: {
     source: "Proxy",
     base: CONFIG.PROXY_BASE,
@@ -177,6 +177,15 @@ function setHeartbeat(message) {
   elements.heartbeat.textContent = message;
 }
 
+function setText(id, value) {
+  const el = document.getElementById(id);
+  if (!el) {
+    console.warn("Missing element id:", id);
+    return;
+  }
+  el.textContent = String(value ?? "");
+}
+
 function timeAgo(ts) {
   if (!ts) return "-";
   const diffMs = Date.now() - ts;
@@ -248,15 +257,9 @@ function setDataSource(label, base) {
   }
   state.diagnostics.source = label;
   state.diagnostics.base = base || "not configured";
-  if (elements.diagSource) {
-    elements.diagSource.textContent = label || "Proxy";
-  }
-  if (elements.diagBase) {
-    elements.diagBase.textContent = base || "not configured";
-  }
-  if (elements.diagBuild) {
-    elements.diagBuild.textContent = BUILD_ID;
-  }
+  setText("diagSource", label || "Proxy");
+  setText("diagBase", base || "not configured");
+  setText("diagBuild", BUILD_ID);
 }
 
 function updateDataRecords(count) {
@@ -291,11 +294,11 @@ function setLatestTxState(tx, reason) {
 
   if (elements.diagLatestTx) {
     if (hasTx) {
-      elements.diagLatestTx.textContent = tx;
+      setText("diagLatestTx", tx);
       elements.diagLatestTx.href = buildTxUrl(tx);
       elements.diagLatestTx.setAttribute("aria-disabled", "false");
     } else {
-      elements.diagLatestTx.textContent = "none";
+      setText("diagLatestTx", "none");
       elements.diagLatestTx.href = "#";
       elements.diagLatestTx.setAttribute("aria-disabled", "true");
     }
@@ -310,32 +313,25 @@ function shouldShowDebugLink() {
 }
 
 function updateDiagnosticsUI() {
-  if (!elements.diagFetchTime) return;
-  elements.diagFetchTime.textContent = state.diagnostics.lastFetch || "pending";
-  elements.diagStatus.textContent = state.diagnostics.httpStatus || "pending";
-  elements.diagRecords.textContent = String(state.diagnostics.records ?? 0);
-  elements.diagIncoming.textContent = String(state.diagnostics.incoming ?? 0);
-  if (elements.diagQuery) {
-    elements.diagQuery.textContent = state.diagnostics.query || "-";
+  setText("diagBuild", state.diagnostics.build || BUILD_ID);
+  setText("diagSource", state.diagnostics.source || "Proxy");
+  setText("diagBase", state.diagnostics.base || "not configured");
+  setText("diagQuery", state.diagnostics.query || "pending");
+  setText("diagConfirm", state.diagnostics.confirm || "0");
+  setText("diagFetchTime", state.diagnostics.lastFetch || "pending");
+  setText("diagStatus", state.diagnostics.httpStatus || "pending");
+  setText("diagRecords", String(state.diagnostics.records ?? 0));
+  setText("diagIncoming", String(state.diagnostics.incoming ?? 0));
+  setText("diagLatestTx", state.diagnostics.latestTx || "none");
+  setText("diagKnownTx", state.diagnostics.knownTx || "pending");
+  setText("diagError", state.diagnostics.error || "none");
+
+  const attempts = state.diagnostics.attempts.slice();
+  if (state.diagnostics.notes.length > 0) {
+    attempts.push("Notes:");
+    state.diagnostics.notes.forEach((note) => attempts.push(`- ${note}`));
   }
-  if (elements.diagConfirm) {
-    elements.diagConfirm.textContent = state.diagnostics.confirm || "-";
-  }
-  if (elements.diagBuild) {
-    elements.diagBuild.textContent = state.diagnostics.build || BUILD_ID;
-  }
-  if (elements.diagKnownTx) {
-    elements.diagKnownTx.textContent = state.diagnostics.knownTx || "pending";
-  }
-  elements.diagError.textContent = state.diagnostics.error || "none";
-  if (elements.diagAttempts) {
-    const attempts = state.diagnostics.attempts.slice();
-    if (state.diagnostics.notes.length > 0) {
-      attempts.push("Notes:");
-      state.diagnostics.notes.forEach((note) => attempts.push(`- ${note}`));
-    }
-    elements.diagAttempts.textContent = attempts.length ? attempts.join("\n") : "No attempts yet.";
-  }
+  setText("diagAttempts", attempts.length ? attempts.join("\n") : "No attempts yet.");
 }
 
 function setDiagnostics(status) {
@@ -391,13 +387,13 @@ function updateKnownTxNotice(records, hasError) {
   const known = getKnownTxHashes();
   if (known.length === 0) {
     state.diagnostics.knownTx = "none";
-    if (elements.diagKnownTx) elements.diagKnownTx.textContent = "none";
+    setText("diagKnownTx", "none");
     elements.knownTxNotice.hidden = true;
     return;
   }
   if (hasError) {
     state.diagnostics.knownTx = "UNAVAILABLE";
-    if (elements.diagKnownTx) elements.diagKnownTx.textContent = "UNAVAILABLE";
+    setText("diagKnownTx", "UNAVAILABLE");
     elements.knownTxNotice.hidden = true;
     return;
   }
@@ -406,7 +402,7 @@ function updateKnownTxNotice(records, hasError) {
     return tx ? known.includes(tx) : false;
   });
   state.diagnostics.knownTx = found ? "FOUND" : "NOT FOUND";
-  if (elements.diagKnownTx) elements.diagKnownTx.textContent = state.diagnostics.knownTx;
+  setText("diagKnownTx", state.diagnostics.knownTx);
   elements.knownTxNotice.hidden = found;
   const firstKnown = known[0];
   elements.knownTxButton.dataset.tx = firstKnown;
@@ -612,6 +608,7 @@ async function fetchTransfersFromBase(sourceLabel) {
 
   while (start < CONFIG.MAX_TX_SCAN && start < total) {
     const url = buildProxyUrl(start, limit);
+    console.log("[fundraiser] fetch:", url);
     if (!url) {
       recordAttempt({
         source: sourceLabel,
@@ -954,8 +951,8 @@ function updateDelayWarning(transfers, donations, latestTx) {
 }
 
 async function refresh() {
-  state.refreshTick += 1;
-  setHeartbeat(`refresh tick #${state.refreshTick} @ ${nowChicago()}`);
+  refreshTick += 1;
+  setHeartbeat(`Heartbeat: refresh #${refreshTick} started - ${nowChicago()}`);
   state.diagnostics.attempts = [];
   state.diagnostics.notes = [];
   state.diagnostics.query = "running";
@@ -1040,12 +1037,18 @@ async function refresh() {
     state.diagnostics.incoming = 0;
     updateDataRecords(0);
     const snippetText = upstreamSnippet ? ` Upstream: ${upstreamSnippet}` : "";
-    state.diagnostics.error = `${error?.message || "Unknown error"}${snippetText}${hint}`;
+    const errText = error?.stack || error?.message || String(error);
+    state.diagnostics.error = `${errText}${snippetText}${hint}`;
   } finally {
     state.diagnostics.query = "done";
     updateDiagnosticsUI();
+    setHeartbeat(
+      `Heartbeat: refresh #${refreshTick} done - status=${state.diagnostics.httpStatus} - records=${state.diagnostics.records} - ${nowChicago()}`
+    );
   }
-}\nfunction setupCopy() {
+}
+
+function setupCopy() {
   if (!elements.copyButton) return;
   elements.copyButton.addEventListener("click", async () => {
     try {
@@ -1901,13 +1904,14 @@ function boot() {
   try {
     initConfig();
     setDiagnostics("booted");
-    setHeartbeat(`boot ok @ ${nowChicago()}`);
+    setHeartbeat(`Heartbeat: boot() OK - BUILD ${BUILD_ID} - ${nowChicago()}`);
+    console.log(`[fundraiser] Heartbeat: boot() OK - BUILD ${BUILD_ID} - ${nowChicago()}`);
     refresh();
     clearInterval(window.__fundraiserTimer);
     window.__fundraiserTimer = setInterval(refresh, CONFIG.REFRESH_SECONDS * 1000);
   } catch (error) {
     console.error("[fundraiser] boot error", error);
-    state.diagnostics.error = error?.message || String(error);
+    state.diagnostics.error = error?.stack || error?.message || String(error);
     state.diagnostics.httpStatus = "error";
     updateDiagnosticsUI();
   }
