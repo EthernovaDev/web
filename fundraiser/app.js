@@ -1,8 +1,8 @@
 ﻿const CONFIG = {
   TRON_ADDRESS: "TVYT4XtYtnBEg5VnKNUnx1n8oUeZ8mq2Lg",
-  GOAL_USDT: 3499,
+  GOAL_USDT: 3900,
   LAUNCH_DATE_UTC: "2026-01-01T00:00:00Z",
-  DEADLINE_DAYS: 30,
+  DEADLINE_DAYS: 45,
   USDT_CONTRACT_TRON: "TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj",
   API_BASE: "https://apilist.tronscanapi.com",
   TRONSCAN_WALLET_URL: "https://tronscan.org/#/address/{ADDRESS}",
