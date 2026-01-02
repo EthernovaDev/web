@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -13,6 +13,14 @@
       color: #ffdede;
       font-weight: 600;
       margin-top: 24px;
+    }
+
+    .debug-error {
+      border: 1px solid rgba(255, 107, 107, 0.8);
+      background: rgba(255, 107, 107, 0.2);
+      color: #ffdede;
+      margin-top: 16px;
+      font-weight: 600;
     }
 
     .debug-grid {
@@ -75,7 +83,11 @@
 
   <main class="container">
     <section class="card debug-warning">
-      Debug page — do not share publicly.
+      Debug page - do not share publicly.
+    </section>
+
+    <section class="card debug-error" id="debugInitError" hidden>
+      DEBUG INIT FAILED.
     </section>
 
     <section class="card">
@@ -103,15 +115,17 @@
         <button class="btn" id="btnFetchProxy" type="button">Fetch using proxy</button>
       </div>
 
-      <div class="tiny" id="fetchStatus">Status: -</div>
-      <div class="tiny" id="fetchSource">Source: -</div>
+      <div class="tiny" id="fetchStatus">Status: Ready</div>
+      <div class="tiny" id="fetchSource">Source: Ready</div>
+      <div class="tiny">Records: <span id="recordCount">-</span> | Incoming: <span id="incomingCount">-</span></div>
+      <div class="tiny" id="responseSnippet">Response: -</div>
     </section>
 
     <section class="card">
       <h2>Search by TX hash</h2>
       <div class="debug-search">
         <input id="txSearch" type="text" placeholder="Paste tx hash" />
-        <button class="btn" id="btnSearch" type="button">Search</button>
+        <button class="btn" id="btnSearchTx" type="button">Search</button>
       </div>
       <pre class="debug-pre" id="searchResult">No search yet.</pre>
     </section>
@@ -123,7 +137,6 @@
     </section>
   </main>
 
-  <script src="app.js"></script>
-  <script src="debug.js"></script>
+  <script src="./debug.js" defer></script>
 </body>
 </html>

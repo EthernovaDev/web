@@ -724,9 +724,10 @@ async function fetchTransfers() {
         error?.status === 429 ||
         error?.name === "TypeError";
       if (shouldFallback) {
-        for (const base of apiBases) {
+        for (let i = 0; i < apiBases.length; i += 1) {
+          const base = apiBases[i];
           try {
-            return await tryFetch(base, "Direct Tronscan API");
+            return await tryFetch(base, `Direct base #${i + 1}`);
           } catch (fallbackError) {
             lastError = fallbackError;
           }
@@ -734,9 +735,10 @@ async function fetchTransfers() {
       }
     }
   } else {
-    for (const base of apiBases) {
+    for (let i = 0; i < apiBases.length; i += 1) {
+      const base = apiBases[i];
       try {
-        return await tryFetch(base, "Direct Tronscan API");
+        return await tryFetch(base, `Direct base #${i + 1}`);
       } catch (error) {
         lastError = error;
         const shouldFallback =
@@ -946,7 +948,7 @@ async function refresh() {
   state.diagnostics.lastFetch = new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC";
   try {
     showErrorBanner("");
-    showProxyBanner(CONFIG.API_MODE === "proxy" && !CONFIG.PROXY_BASE);
+    showProxyBanner(!CONFIG.PROXY_BASE);
     const { transfers, source, status, base } = await fetchTransfers();
     const { donations, totalRaised } = prepareDonations(transfers);
     const latestTx = donations[0]?.tx;
@@ -1038,17 +1040,19 @@ function init() {
   elements.addressText.textContent = CONFIG.TRON_ADDRESS;
   if (elements.verifyWalletBtn) {
     elements.verifyWalletBtn.href = buildWalletUrl();
-    elements.verifyWalletBtn.addEventListener("click", (event) => {
-      event.preventDefault();
-      openInNewTab(buildWalletUrl(), elements.verifyWalletBtn);
-    });
   }
   if (elements.latestTxBtn) {
     elements.latestTxBtn.href = "#";
     elements.latestTxBtn.addEventListener("click", (event) => {
-      event.preventDefault();
-      if (elements.latestTxBtn.getAttribute("aria-disabled") === "true") return;
-      openInNewTab(state.latestIncomingTxUrl, elements.latestTxBtn);
+      if (elements.latestTxBtn.getAttribute("aria-disabled") === "true") {
+        event.preventDefault();
+        return;
+      }
+      const original = elements.latestTxBtn.textContent;
+      elements.latestTxBtn.textContent = "Opening...";
+      setTimeout(() => {
+        elements.latestTxBtn.textContent = original;
+      }, 800);
     });
   }
   if (elements.knownTxButton) {
@@ -1089,10 +1093,12 @@ function init() {
   if (elements.feedRefreshSeconds) {
     elements.feedRefreshSeconds.textContent = String(CONFIG.REFRESH_SECONDS);
   }
-  const initialBase = CONFIG.API_MODE === "proxy" ? CONFIG.PROXY_BASE : getApiBases()[0];
-  setDataSource(CONFIG.API_MODE === "proxy" ? "Proxy" : "Direct Tronscan API", initialBase || "-");
+  const initialBases = getApiBases();
+  const initialBase = CONFIG.API_MODE === "proxy" ? CONFIG.PROXY_BASE : initialBases[0];
+  const initialLabel = CONFIG.API_MODE === "proxy" ? "Proxy" : "Direct base #1";
+  setDataSource(initialLabel, initialBase || "-");
   setLatestTxState(null, "No donations detected from API");
-  showProxyBanner(CONFIG.API_MODE === "proxy" && !CONFIG.PROXY_BASE);
+  showProxyBanner(!CONFIG.PROXY_BASE);
   updateDeadline();
   updateProgress(0);
   setupCopy();

@@ -1,26 +1,14 @@
-const FALLBACK_CONFIG = {
+﻿const CONFIG = {
   TRON_ADDRESS: "TVYT4XtYtnBEg5VnKNUnx1n8oUeZ8mq2Lg",
   USDT_CONTRACT_TRON: "TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj",
-  API_BASE: "https://apilist.tronscanapi.com",
   API_BASES: [
     "https://apilist.tronscanapi.com",
     "https://apilist.tronscan.org",
   ],
   PROXY_BASE: "",
-  TRANSFERS_PATH: "/api/token_trc20/transfers",
-  FALLBACK_PATH: "/api/token_trc20/transfers",
-  PROXY_TRANSFERS_PATH: "/trc20/transfers",
-  PRIMARY_QUERY_MODE: "related",
-  FALLBACK_QUERY_MODE: "address",
-  FALLBACK_CONFIRM: false,
+  API_MODE: "direct",
   MAX_TX_SCAN: 500,
-  TRONSCAN_WALLET_URL: "https://tronscan.org/#/address/{ADDRESS}",
-  TRONSCAN_TX_URL: "https://tronscan.org/#/transaction/{TX}",
 };
-
-const CONFIG = typeof window !== "undefined" && window.FUNDRAISER_CONFIG
-  ? window.FUNDRAISER_CONFIG
-  : FALLBACK_CONFIG;
 
 const $ = (id) => document.getElementById(id);
 
@@ -33,19 +21,27 @@ const elements = {
   btnFetchProxy: $("btnFetchProxy"),
   fetchStatus: $("fetchStatus"),
   fetchSource: $("fetchSource"),
+  recordCount: $("recordCount"),
+  incomingCount: $("incomingCount"),
+  responseSnippet: $("responseSnippet"),
   rawJson: $("rawJson"),
   attemptLog: $("attemptLog"),
   txSearch: $("txSearch"),
-  btnSearch: $("btnSearch"),
+  btnSearchTx: $("btnSearchTx"),
   searchResult: $("searchResult"),
+  debugInitError: $("debugInitError"),
 };
 
 const state = {
   transfers: [],
   payload: null,
   attempts: [],
-  source: "-",
-  status: "-",
+  source: "Ready",
+  status: "Ready",
+  recordCount: 0,
+  incomingCount: 0,
+  fetchSucceeded: false,
+  errorSnippet: "-",
 };
 
 function sanitizeBase(url) {
@@ -53,30 +49,25 @@ function sanitizeBase(url) {
   return url.endsWith("/") ? url.slice(0, -1) : url;
 }
 
-function apiBase(base) {
-  return sanitizeBase(base);
+function normalizeAddress(value) {
+  if (!value || typeof value !== "string") return "";
+  return value.trim().toLowerCase();
 }
 
 function getApiBases() {
-  if (Array.isArray(CONFIG.API_BASES) && CONFIG.API_BASES.length > 0) {
-    return CONFIG.API_BASES.map((base) => sanitizeBase(base)).filter(Boolean);
-  }
-  const fallback = sanitizeBase(CONFIG.API_BASE);
-  return fallback ? [fallback] : [];
+  return (CONFIG.API_BASES || []).map((base) => sanitizeBase(base)).filter(Boolean);
 }
 
-function createTransferUrl(base, start, limit, options = {}) {
-  const normalizedBase = apiBase(base);
-  const confirm = options.confirm === false ? "false" : "true";
+function createTransferUrl(base, start, limit, confirmValue) {
+  const normalizedBase = sanitizeBase(base);
   const params = new URLSearchParams({
     start: String(start),
     limit: String(limit),
+    confirm: confirmValue ? "true" : "false",
     contract_address: CONFIG.USDT_CONTRACT_TRON,
     relatedAddress: CONFIG.TRON_ADDRESS,
-    confirm,
   });
-  const path = options.path || CONFIG.TRANSFERS_PATH;
-  return `${normalizedBase}${path}?${params.toString()}`;
+  return `${normalizedBase}/api/token_trc20/transfers?${params.toString()}`;
 }
 
 function looksLikeTransfer(item) {
@@ -84,6 +75,7 @@ function looksLikeTransfer(item) {
   return (
     "transaction_id" in item ||
     "txID" in item ||
+    "txid" in item ||
     "hash" in item ||
     "contract_address" in item ||
     "amount" in item ||
@@ -116,28 +108,97 @@ function extractTransfers(payload) {
 
 function extractTotal(payload) {
   if (!payload || typeof payload !== "object") return null;
-  const raw =
-    payload.total ??
-    payload.totalCount ??
-    payload.total_count ??
-    payload.count ??
-    payload.pageSize;
+  const raw = payload.total ?? payload.totalCount ?? payload.total_count ?? payload.count ?? payload.pageSize;
   const n = Number(raw);
   return Number.isFinite(n) ? n : null;
 }
 
 function getTxId(item) {
-  return item?.transaction_id ?? item?.txID ?? item?.hash ?? item?.transaction_id_hex ?? "";
+  return item?.transaction_id ?? item?.txID ?? item?.txid ?? item?.hash ?? item?.transaction_id_hex ?? "";
 }
 
-async function readErrorBody(res) {
-  try {
-    const text = await res.text();
-    if (!text) return "";
-    return text.replace(/\s+/g, " ").slice(0, 500);
-  } catch {
-    return "";
+function getToAddress(item) {
+  return (
+    item?.to ??
+    item?.to_address ??
+    item?.transferInfo?.to ??
+    item?.contractData?.to ??
+    item?.toAddress ??
+    ""
+  );
+}
+
+function getFromAddress(item) {
+  return (
+    item?.from ??
+    item?.from_address ??
+    item?.transferInfo?.from ??
+    item?.contractData?.owner_address ??
+    item?.fromAddress ??
+    ""
+  );
+}
+
+function parseTimestamp(item) {
+  const raw = item?.block_timestamp ?? item?.block_ts ?? item?.timestamp ?? item?.time ?? null;
+  if (!raw) return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return null;
+  return n > 1e12 ? n : n * 1000;
+}
+
+function parseBlock(item) {
+  const raw = item?.block ?? item?.block_number ?? item?.blockNumber ?? item?.blockHeight ?? null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function isConfirmed(item) {
+  if (item?.confirmed === true) return true;
+  const block = parseBlock(item);
+  return block > 0;
+}
+
+function isUsdt(item) {
+  const contract = item?.contract_address ?? item?.contractAddress ?? item?.token_info?.address ?? "";
+  return normalizeAddress(contract) === normalizeAddress(CONFIG.USDT_CONTRACT_TRON);
+}
+
+function isIncoming(item) {
+  const target = normalizeAddress(CONFIG.TRON_ADDRESS);
+  const to = normalizeAddress(getToAddress(item));
+  return to && to === target;
+}
+
+function findDecimals(item) {
+  const raw = item?.token_info?.decimals ?? item?.tokenDecimal ?? item?.token_decimal ?? item?.decimals ?? null;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function parseRawAmount(item) {
+  return item?.amount_str ?? item?.amount ?? item?.value ?? item?.quant ?? item?.token_amount ?? null;
+}
+
+function convertAmount(raw, decimals) {
+  if (raw === null || raw === undefined) return null;
+  if (typeof raw === "string" && raw.includes(".")) {
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
   }
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return null;
+  return n / Math.pow(10, decimals);
+}
+
+function truncatePayload(payload) {
+  if (Array.isArray(payload)) return payload.slice(0, 3);
+  if (!payload || typeof payload !== "object") return payload;
+  const trimmed = { ...payload };
+  for (const [key, value] of Object.entries(trimmed)) {
+    if (Array.isArray(value)) trimmed[key] = value.slice(0, 3);
+  }
+  return trimmed;
 }
 
 function recordAttempt({ source, url, status, records, error }) {
@@ -148,45 +209,21 @@ function recordAttempt({ source, url, status, records, error }) {
   state.attempts.push(line);
 }
 
-function truncatePayload(payload) {
-  if (Array.isArray(payload)) {
-    return payload.slice(0, 3);
+function renderStatus(statusText, sourceText) {
+  if (elements.fetchStatus) {
+    elements.fetchStatus.textContent = `Status: ${statusText}`;
   }
-  if (!payload || typeof payload !== "object") return payload;
-  const trimmed = { ...payload };
-  for (const [key, value] of Object.entries(trimmed)) {
-    if (Array.isArray(value)) {
-      trimmed[key] = value.slice(0, 3);
-    }
+  if (elements.fetchSource) {
+    elements.fetchSource.textContent = `Source: ${sourceText}`;
   }
-  return trimmed;
-}
-
-function updateUrls() {
-  const bases = getApiBases();
-  if (elements.base1Url) {
-    elements.base1Url.textContent = bases[0]
-      ? createTransferUrl(bases[0], 0, 20, {
-          confirm: true,
-          path: CONFIG.TRANSFERS_PATH,
-        })
-      : "-";
+  if (elements.recordCount) {
+    elements.recordCount.textContent = String(state.recordCount);
   }
-  if (elements.base2Url) {
-    elements.base2Url.textContent = bases[1]
-      ? createTransferUrl(bases[1], 0, 20, {
-          confirm: true,
-          path: CONFIG.TRANSFERS_PATH,
-        })
-      : "-";
+  if (elements.incomingCount) {
+    elements.incomingCount.textContent = String(state.incomingCount);
   }
-  if (elements.proxyUrl) {
-    elements.proxyUrl.textContent = CONFIG.PROXY_BASE
-      ? createTransferUrl(CONFIG.PROXY_BASE, 0, 20, {
-          confirm: true,
-          path: CONFIG.PROXY_TRANSFERS_PATH,
-        })
-      : "Proxy base not configured";
+  if (elements.responseSnippet) {
+    elements.responseSnippet.textContent = `Response: ${state.errorSnippet || "-"}`;
   }
 }
 
@@ -200,172 +237,188 @@ function renderPayload() {
   }
 }
 
-function renderStatus(message) {
-  if (elements.fetchStatus) {
-    elements.fetchStatus.textContent = message;
-  }
-  if (elements.fetchSource) {
-    elements.fetchSource.textContent = `Source: ${state.source}`;
+async function readErrorBody(res) {
+  try {
+    const text = await res.text();
+    if (!text) return "";
+    return text.replace(/\s+/g, " ").slice(0, 500);
+  } catch {
+    return "";
   }
 }
 
 async function fetchTransfersFromBase(base, sourceLabel) {
   const limit = 20;
+  let start = 0;
+  let total = Infinity;
+  let results = [];
   let lastStatus = null;
   let firstPayload = null;
 
-  const runScan = async (options, phaseLabel) => {
-    let start = 0;
-    let total = Infinity;
-    let results = [];
-
-    while (start < CONFIG.MAX_TX_SCAN && start < total) {
-      const url = createTransferUrl(base, start, limit, options);
-      let res;
-      try {
-        res = await fetch(url, { cache: "no-store" });
-      } catch (error) {
-        recordAttempt({
-          source: `${sourceLabel}/${phaseLabel}`,
-          url,
-          status: 0,
-          records: 0,
-          error: error?.message || "Fetch failed",
-        });
-        throw error;
-      }
-      lastStatus = res.status;
-
-      if (!res.ok) {
-        const body = await readErrorBody(res);
-        const message = body ? `HTTP ${res.status}: ${body}` : `HTTP ${res.status}`;
-        recordAttempt({
-          source: `${sourceLabel}/${phaseLabel}`,
-          url,
-          status: res.status,
-          records: 0,
-          error: message,
-        });
-        const error = new Error(message);
-        error.status = res.status;
-        throw error;
-      }
-
-      let payload;
-      try {
-        payload = await res.json();
-      } catch (error) {
-        recordAttempt({
-          source: `${sourceLabel}/${phaseLabel}`,
-          url,
-          status: res.status,
-          records: 0,
-          error: "Invalid JSON",
-        });
-        throw error;
-      }
-
-      if (!firstPayload) {
-        firstPayload = payload;
-      }
-
-      const list = extractTransfers(payload);
-      recordAttempt({
-        source: `${sourceLabel}/${phaseLabel}`,
-        url,
-        status: res.status,
-        records: Array.isArray(list) ? list.length : 0,
-        error: "",
-      });
-
-      const totalCount = extractTotal(payload);
-      if (Number.isFinite(totalCount)) {
-        total = totalCount;
-      }
-
-      if (!Array.isArray(list) || list.length === 0) {
-        break;
-      }
-
-      results = results.concat(list);
-      start += list.length;
+  while (start < CONFIG.MAX_TX_SCAN && start < total) {
+    const url = createTransferUrl(base, start, limit, true);
+    let res;
+    try {
+      res = await fetch(url, { cache: "no-store" });
+    } catch (error) {
+      recordAttempt({ source: sourceLabel, url, status: 0, records: 0, error: error?.message || "Fetch failed" });
+      throw error;
     }
 
-    return results;
-  };
+    lastStatus = res.status;
 
-  const isProxy = sourceLabel.toLowerCase().includes("proxy");
-  const primaryPath = isProxy ? CONFIG.PROXY_TRANSFERS_PATH : CONFIG.TRANSFERS_PATH;
-  const fallbackPath = isProxy ? CONFIG.PROXY_TRANSFERS_PATH : CONFIG.FALLBACK_PATH;
+    if (!res.ok) {
+      const body = await readErrorBody(res);
+      const message = body ? `HTTP ${res.status}: ${body}` : `HTTP ${res.status}`;
+      recordAttempt({ source: sourceLabel, url, status: res.status, records: 0, error: message });
+      const error = new Error(message);
+      error.status = res.status;
+      error.body = body;
+      throw error;
+    }
 
-  let transfers = await runScan(
-    {
-      mode: CONFIG.PRIMARY_QUERY_MODE,
-      confirm: true,
-      path: primaryPath,
-    },
-    "primary"
-  );
+    let payload;
+    try {
+      payload = await res.json();
+    } catch (error) {
+      recordAttempt({ source: sourceLabel, url, status: res.status, records: 0, error: "Invalid JSON" });
+      throw error;
+    }
 
-  if (transfers.length === 0 && fallbackPath) {
-    transfers = await runScan(
-      {
-        mode: CONFIG.FALLBACK_QUERY_MODE,
-        confirm: CONFIG.FALLBACK_CONFIRM,
-        path: fallbackPath,
-      },
-      "fallback"
-    );
+    if (!firstPayload) {
+      firstPayload = payload;
+    }
+
+    const list = extractTransfers(payload);
+    recordAttempt({ source: sourceLabel, url, status: res.status, records: Array.isArray(list) ? list.length : 0, error: "" });
+
+    const totalCount = extractTotal(payload);
+    if (Number.isFinite(totalCount)) {
+      total = totalCount;
+    }
+
+    if (!Array.isArray(list) || list.length === 0) {
+      break;
+    }
+
+    results = results.concat(list);
+    start += list.length;
   }
 
-  return { transfers, status: lastStatus, payload: firstPayload };
+  return { transfers: results, payload: firstPayload, status: lastStatus };
 }
 
-async function fetchAndRender(base, source) {
-  updateUrls();
+function countIncoming(records) {
+  return records.filter((item) => isUsdt(item) && isConfirmed(item) && isIncoming(item)).length;
+}
+
+function formatSearchResult(item) {
+  const tx = getTxId(item) || "-";
+  const from = getFromAddress(item) || "-";
+  const to = getToAddress(item) || "-";
+  const decimals = findDecimals(item) ?? 6;
+  const amountRaw = parseRawAmount(item);
+  const amount = convertAmount(amountRaw, decimals);
+  const timestamp = parseTimestamp(item);
+  const iso = timestamp ? new Date(timestamp).toISOString() : "-";
+
+  return [
+    `Tx: ${tx}`,
+    `From: ${from}`,
+    `To: ${to}`,
+    `Amount: ${amount !== null ? amount.toFixed(2) : "-"} USDT`,
+    `Timestamp: ${iso}`,
+  ].join("\n");
+}
+
+async function fetchAndRender(base, sourceLabel) {
   state.attempts = [];
   state.payload = null;
   state.transfers = [];
-  state.source = source;
-  state.status = "-";
+  state.recordCount = 0;
+  state.incomingCount = 0;
+  state.fetchSucceeded = false;
+  state.errorSnippet = "-";
+
   if (!base) {
-    renderStatus("Status: Base not configured");
+    state.errorSnippet = "Base not configured";
+    renderStatus("Error", sourceLabel);
     renderPayload();
     return;
   }
-  renderStatus("Status: Loading...");
+
+  renderStatus("Fetching...", sourceLabel);
 
   try {
-    const result = await fetchTransfersFromBase(base, state.source);
+    const result = await fetchTransfersFromBase(base, sourceLabel);
     state.payload = result.payload;
     state.transfers = result.transfers;
-    state.status = result.status ? `HTTP ${result.status}` : "OK";
-    renderStatus(`Status: ${state.status} (records: ${state.transfers.length})`);
+    state.recordCount = result.transfers.length;
+    state.incomingCount = countIncoming(result.transfers);
+    state.fetchSucceeded = true;
+    state.errorSnippet = "-";
+    const statusText = result.status ? `HTTP ${result.status}` : "OK";
+    renderStatus(statusText, sourceLabel);
     renderPayload();
   } catch (error) {
-    const statusNote = error?.status ? `HTTP ${error.status}` : "Error";
-    renderStatus(`Status: ${statusNote} - ${error.message || "Fetch failed"}`);
+    const statusText = error?.status ? `HTTP ${error.status}` : "Error";
+    state.errorSnippet = error?.body || error?.message || "Fetch failed";
+    renderStatus(statusText, sourceLabel);
     renderPayload();
+  }
+}
+
+function updateUrls() {
+  const bases = getApiBases();
+  if (elements.base1Url) {
+    elements.base1Url.textContent = bases[0]
+      ? createTransferUrl(bases[0], 0, 20, true)
+      : "-";
+  }
+  if (elements.base2Url) {
+    elements.base2Url.textContent = bases[1]
+      ? createTransferUrl(bases[1], 0, 20, true)
+      : "-";
+  }
+  if (elements.proxyUrl) {
+    elements.proxyUrl.textContent = CONFIG.PROXY_BASE
+      ? createTransferUrl(CONFIG.PROXY_BASE, 0, 20, true)
+      : "(not configured)";
   }
 }
 
 function searchTx() {
   const query = (elements.txSearch?.value || "").trim().toLowerCase();
   if (!query) {
-    elements.searchResult.textContent = "Enter a tx hash to search.";
+    if (elements.searchResult) elements.searchResult.textContent = "Enter a tx hash to search.";
     return;
   }
-
   const match = state.transfers.find((item) => getTxId(item).toLowerCase() === query);
   if (match) {
-    elements.searchResult.textContent = JSON.stringify(match, null, 2);
-  } else {
-    elements.searchResult.textContent = "TX hash not found in fetched records.";
+    if (elements.searchResult) elements.searchResult.textContent = formatSearchResult(match);
+    return;
+  }
+  if (state.fetchSucceeded) {
+    if (elements.searchResult) {
+      elements.searchResult.textContent = "Not returned by API results (possible indexing delay).";
+    }
+  } else if (elements.searchResult) {
+    elements.searchResult.textContent = "No data yet. Fetch data first.";
   }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+function showInitError(error) {
+  console.error("DEBUG INIT FAILED:", error);
+  if (elements.debugInitError) {
+    elements.debugInitError.hidden = false;
+    elements.debugInitError.textContent = `DEBUG INIT FAILED: ${error?.message || error}`;
+  }
+}
+
+function init() {
   updateUrls();
+  renderStatus("Ready", "Ready");
+
   const bases = getApiBases();
   elements.btnFetchBase1?.addEventListener("click", () => {
     fetchAndRender(bases[0], "Base #1");
@@ -376,5 +429,13 @@ document.addEventListener("DOMContentLoaded", () => {
   elements.btnFetchProxy?.addEventListener("click", () => {
     fetchAndRender(sanitizeBase(CONFIG.PROXY_BASE), "Proxy");
   });
-  elements.btnSearch?.addEventListener("click", searchTx);
+  elements.btnSearchTx?.addEventListener("click", searchTx);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  try {
+    init();
+  } catch (error) {
+    showInitError(error);
+  }
 });
