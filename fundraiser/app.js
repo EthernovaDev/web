@@ -174,6 +174,23 @@ function formatDateUtc(ts) {
   return d.toISOString().replace("T", " ").slice(0, 16) + " UTC";
 }
 
+function formatChicago(date, withTime) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "-";
+  const options = {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+  };
+  if (withTime) {
+    options.hour = "numeric";
+    options.minute = "2-digit";
+    options.hour12 = true;
+  }
+  const formatted = new Intl.DateTimeFormat("en-US", options).format(date);
+  return `${formatted} (Chicago)`;
+}
+
 function timeAgo(ts) {
   if (!ts) return "-";
   const diffMs = Date.now() - ts;
@@ -203,7 +220,7 @@ function updateDeadline() {
   const daysRemaining = Math.max(0, Math.ceil(diffMs / (24 * 60 * 60 * 1000)));
 
   elements.daysRemaining.textContent = String(daysRemaining);
-  elements.deadlineDate.textContent = `${deadline.toISOString().slice(0, 10)} (UTC)`;
+  elements.deadlineDate.textContent = formatChicago(deadline, false);
 
   if (diffMs <= 0) {
     elements.deadlineWarning.hidden = false;
@@ -425,6 +442,20 @@ function createTransferUrl(base, start, limit, options = {}) {
   return `${normalizedBase}${path}?${params.toString()}`;
 }
 
+function buildProxyUrl(start, limit) {
+  const proxyBase = getProxyBase();
+  if (!proxyBase) return "";
+  const params = new URLSearchParams({
+    start: String(start),
+    limit: String(limit),
+    confirm: "0",
+    direction: "in",
+    contract_address: CONFIG.USDT_CONTRACT_TRON,
+    relatedAddress: CONFIG.TRON_ADDRESS,
+  });
+  return `${proxyBase}${CONFIG.PROXY_TRANSFERS_PATH}?${params.toString()}`;
+}
+
 function recordAttempt({ source, url, status, records, error }) {
   const statusText = status ? `HTTP ${status}` : "HTTP ?";
   const recordText = `records=${records ?? 0}`;
@@ -466,6 +497,11 @@ function extractTransfers(payload) {
     }
   }
   return [];
+}
+
+function extractProxyTransfers(payload) {
+  if (!payload || typeof payload !== "object") return [];
+  return Array.isArray(payload.token_transfers) ? payload.token_transfers : [];
 }
 
 function extractTotal(payload) {
@@ -606,7 +642,7 @@ function convertAmount(raw, decimals) {
   return n / Math.pow(10, decimals);
 }
 
-async function fetchTransfersFromBase(base, sourceLabel) {
+async function fetchTransfersFromBase(base, sourceLabel, isProxy = false) {
   const limit = 20;
   let lastStatus = null;
 
@@ -616,7 +652,19 @@ async function fetchTransfersFromBase(base, sourceLabel) {
     let results = [];
 
     while (start < CONFIG.MAX_TX_SCAN && start < total) {
-      const url = createTransferUrl(base, start, limit, options);
+      const url = isProxy ? buildProxyUrl(start, limit) : createTransferUrl(base, start, limit, options);
+      if (!url) {
+        recordAttempt({
+          source: `${sourceLabel}/${phaseLabel}`,
+          url: "(proxy base not configured)",
+          status: 0,
+          records: 0,
+          error: "Proxy base not configured",
+        });
+        const err = new Error("Proxy base not configured");
+        err.status = 0;
+        throw err;
+      }
       if (start === 0) {
         const parsed = new URL(url);
         state.diagnostics.query = parsed.searchParams.toString();
@@ -667,7 +715,7 @@ async function fetchTransfersFromBase(base, sourceLabel) {
         throw error;
       }
 
-      const list = extractTransfers(payload);
+      const list = isProxy ? extractProxyTransfers(payload) : extractTransfers(payload);
       recordAttempt({
         source: `${sourceLabel}/${phaseLabel}`,
         url,
@@ -731,7 +779,7 @@ async function fetchTransfers() {
   let lastError = null;
   let lastStatus = null;
 
-  const tryFetch = async (base, label) => {
+  const tryFetch = async (base, label, isProxy = false) => {
     if (!base) {
       recordAttempt({
         source: label,
@@ -744,14 +792,14 @@ async function fetchTransfers() {
       err.status = 0;
       throw err;
     }
-    const result = await fetchTransfersFromBase(base, label);
+    const result = await fetchTransfersFromBase(base, label, isProxy);
     lastStatus = result.status;
     return { transfers: result.transfers, source: label, base, status: result.status };
   };
 
   if (CONFIG.API_MODE === "proxy") {
     try {
-      return await tryFetch(proxyBase, "Proxy");
+      return await tryFetch(proxyBase, "Proxy", true);
     } catch (error) {
       lastError = error;
       const shouldFallback =
@@ -761,20 +809,20 @@ async function fetchTransfers() {
         error?.name === "TypeError";
       if (shouldFallback) {
         for (let i = 0; i < apiBases.length; i += 1) {
-          const base = apiBases[i];
-          try {
-            return await tryFetch(base, `Direct base #${i + 1}`);
-          } catch (fallbackError) {
-            lastError = fallbackError;
-          }
+        const base = apiBases[i];
+        try {
+          return await tryFetch(base, `Direct base #${i + 1}`, false);
+        } catch (fallbackError) {
+          lastError = fallbackError;
         }
       }
+    }
     }
   } else {
     for (let i = 0; i < apiBases.length; i += 1) {
       const base = apiBases[i];
       try {
-        return await tryFetch(base, `Direct base #${i + 1}`);
+        return await tryFetch(base, `Direct base #${i + 1}`, false);
       } catch (error) {
         lastError = error;
         const shouldFallback =
@@ -794,7 +842,7 @@ async function fetchTransfers() {
         lastError?.status === 429 ||
         lastError?.name === "TypeError";
       if (shouldFallback) {
-        return await tryFetch(proxyBase, "Proxy");
+        return await tryFetch(proxyBase, "Proxy", true);
       }
     }
   }
@@ -812,7 +860,60 @@ function filterIncoming(transfers) {
   });
 }
 
-function prepareDonations(transfers) {
+function prepareProxyDonations(transfers) {
+  state.diagnostics.notes = [];
+  const donations = [];
+  const target = normalizeAddress(CONFIG.TRON_ADDRESS);
+
+  for (const item of transfers) {
+    const to = normalizeAddress(item?.to_address ?? "");
+    if (!to || to !== target) continue;
+    if (!isConfirmedTransfer(item)) continue;
+
+    const rawAmount = item?.quant ?? null;
+    if (rawAmount === null || rawAmount === undefined) {
+      state.diagnostics.notes.push("Skipped transfer with missing quant.");
+      continue;
+    }
+
+    let decimals = Number(item?.tokenInfo?.tokenDecimal);
+    if (!Number.isFinite(decimals)) {
+      decimals = 6;
+      state.diagnostics.notes.push("Token decimals missing; defaulted to 6.");
+    }
+
+    const amount = convertAmount(rawAmount, decimals);
+    if (!Number.isFinite(amount)) {
+      state.diagnostics.notes.push("Skipped transfer with invalid amount.");
+      continue;
+    }
+
+    const tx = item?.transaction_id || "";
+    if (!tx) {
+      state.diagnostics.notes.push("Skipped transfer with missing tx hash.");
+      continue;
+    }
+
+    donations.push({
+      amount,
+      timestamp: parseTimestamp(item),
+      tx,
+      from: item?.from_address ?? "",
+    });
+  }
+
+  donations.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+  const totalRaised = donations.reduce((sum, d) => sum + (Number.isFinite(d.amount) ? d.amount : 0), 0);
+
+  return { donations, totalRaised };
+}
+
+function prepareDonations(transfers, isProxy) {
+  if (isProxy) {
+    return prepareProxyDonations(transfers);
+  }
+
   const incoming = filterIncoming(transfers);
   state.diagnostics.notes = [];
 
@@ -942,7 +1043,7 @@ function renderLiveFeed(donations, hasError) {
 
 function updateLastUpdated() {
   const now = new Date();
-  elements.lastUpdated.textContent = now.toISOString().replace("T", " ").slice(0, 16) + " UTC";
+  elements.lastUpdated.textContent = formatChicago(now, true);
 }
 
 function updateDelayWarning(transfers, donations, latestTx) {
@@ -990,11 +1091,13 @@ async function refresh() {
   state.diagnostics.attempts = [];
   state.diagnostics.notes = [];
   state.diagnostics.lastFetch = new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC";
+  updateLastUpdated();
   try {
     showErrorBanner("");
     showProxyBanner(!isProxyConfigured());
     const { transfers, source, status, base } = await fetchTransfers();
-    const { donations, totalRaised } = prepareDonations(transfers);
+    const isProxySource = source === "Proxy";
+    const { donations, totalRaised } = prepareDonations(transfers, isProxySource);
     const latestTx = donations[0]?.tx;
     const knownTx = getKnownTxHashes()[0] || "";
 
@@ -1005,7 +1108,6 @@ async function refresh() {
     updateKnownTxNotice(transfers, false);
     setLatestTxState(latestTx, donations.length ? "" : "No donations detected from API");
     setDataSource(source, base);
-    updateLastUpdated();
     state.diagnostics.httpStatus = status ? `HTTP ${status}` : "-";
     state.diagnostics.records = transfers.length;
     state.diagnostics.incoming = donations.length;
@@ -1158,6 +1260,8 @@ function init() {
   showProxyBanner(!isProxyConfigured());
   updateDeadline();
   updateProgress(0);
+  updateDataRecords(0);
+  updateLastUpdated();
   setupCopy();
   setupQr();
 
