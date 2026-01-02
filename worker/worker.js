@@ -1,5 +1,5 @@
 ﻿export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const corsHeaders = {
       "Access-Control-Allow-Origin": "*",
@@ -13,6 +13,22 @@
         status: 204,
         headers: corsHeaders,
       });
+    }
+
+    if (!env || !env.TRONSCAN_API_KEY) {
+      return new Response(
+        JSON.stringify({
+          ok: false,
+          error: "Missing TRONSCAN_API_KEY secret (wrangler secret put TRONSCAN_API_KEY)",
+        }),
+        {
+          status: 500,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
     }
 
     if (url.pathname !== "/trc20/transfers") {
