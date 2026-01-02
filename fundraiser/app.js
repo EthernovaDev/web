@@ -31,6 +31,9 @@ const elements = {
   deadlineDate: $("deadlineDate"),
   daysRemaining: $("daysRemaining"),
   deadlineWarning: $("deadlineWarning"),
+  tronscanDelay: $("tronscanDelay"),
+  delayWalletLink: $("delayWalletLink"),
+  delayTxLink: $("delayTxLink"),
   corsBanner: $("corsBanner"),
   lastUpdated: $("lastUpdated"),
   refreshSeconds: $("refreshSeconds"),
@@ -52,6 +55,11 @@ function sanitizeBase(url) {
   return url.endsWith("/") ? url.slice(0, -1) : url;
 }
 
+function normalizeAddress(value) {
+  if (!value || typeof value !== "string") return "";
+  return value.trim().toLowerCase();
+}
+
 function apiBase() {
   return sanitizeBase(CONFIG.OPTIONAL_PROXY_BASE || CONFIG.API_BASE);
 }
@@ -69,6 +77,11 @@ function formatNumber(value, digits) {
 function shortAddress(addr) {
   if (!addr) return "Unknown";
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+}
+
+function shortTx(tx) {
+  if (!tx) return "TX";
+  return `${tx.slice(0, 6)}...${tx.slice(-4)}`;
 }
 
 function formatDateUtc(ts) {
@@ -147,6 +160,7 @@ function createTransferUrl(start, limit) {
     confirm: "true",
     contract_address: CONFIG.USDT_CONTRACT_TRON,
     relatedAddress: CONFIG.TRON_ADDRESS,
+    _: String(Date.now()),
   });
   return `${base}/api/token_trc20/transfers?${params.toString()}`;
 }
@@ -181,6 +195,29 @@ function parseTimestamp(item) {
   return n > 1e12 ? n : n * 1000;
 }
 
+function parseBlock(item) {
+  const raw = item?.block ?? item?.block_number ?? item?.blockNumber ?? item?.blockHeight ?? null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function isConfirmedTransfer(item) {
+  if (item?.confirmed === true) return true;
+  const block = parseBlock(item);
+  if (block > 0) return true;
+  if (item?.confirmed === false && block <= 0) return false;
+  return true;
+}
+
+function isUsdtTransfer(item) {
+  const contract =
+    item?.contract_address ??
+    item?.contractAddress ??
+    item?.token_info?.address ??
+    "";
+  return normalizeAddress(contract) === normalizeAddress(CONFIG.USDT_CONTRACT_TRON);
+}
+
 function getToAddress(item) {
   return (
     item?.to_address ??
@@ -190,6 +227,20 @@ function getToAddress(item) {
     item?.to_address_hex ??
     ""
   );
+}
+
+function isIncomingTransfer(item) {
+  const target = normalizeAddress(CONFIG.TRON_ADDRESS);
+  const candidates = [
+    item?.to,
+    item?.to_address,
+    item?.transferInfo?.to,
+    item?.contractData?.to,
+    item?.toAddress,
+    getToAddress(item),
+  ];
+
+  return candidates.some((value) => normalizeAddress(value) === target);
 }
 
 function getFromAddress(item) {
@@ -244,22 +295,23 @@ async function fetchTransfers() {
       total = data.total;
     }
 
+    for (const item of list) {
+      if (isUsdtTransfer(item)) {
+        console.debug("USDT transfer", item);
+      }
+    }
+
     results = results.concat(list);
     start += list.length;
-
-    if (list.length < limit) {
-      break;
-    }
   }
 
   return results;
 }
 
 function filterIncoming(transfers) {
-  const target = CONFIG.TRON_ADDRESS.toLowerCase();
   return transfers.filter((item) => {
-    const to = getToAddress(item);
-    return to && to.toLowerCase() === target;
+    if (!isConfirmedTransfer(item)) return false;
+    return isIncomingTransfer(item);
   });
 }
 
@@ -355,11 +407,12 @@ function renderLiveFeed(donations, hasError) {
     const fromLink = item.from ? buildWalletUrl().replace(CONFIG.TRON_ADDRESS, item.from) : "#";
     const timeText = timeAgo(item.timestamp);
 
+    const txLabel = item.tx ? shortTx(item.tx) : "TX";
     row.innerHTML = `
       <span class="feed-amount">${formatUSDT(item.amount)} USDT</span>
       <a class="feed-from" href="${fromLink}" target="_blank" rel="noopener">${fromText}</a>
       <span class="feed-time">${timeText}</span>
-      <a class="feed-link" href="${buildTxUrl(item.tx)}" target="_blank" rel="noopener">TX</a>
+      <a class="feed-link" href="${buildTxUrl(item.tx)}" target="_blank" rel="noopener">${txLabel}</a>
     `;
 
     elements.feedList.appendChild(row);
@@ -371,6 +424,36 @@ function updateLastUpdated() {
   elements.lastUpdated.textContent = now.toISOString().replace("T", " ").slice(0, 16) + " UTC";
 }
 
+function updateDelayWarning(transfers, donations) {
+  if (!Array.isArray(transfers) || transfers.length === 0) {
+    elements.tronscanDelay.hidden = true;
+    return;
+  }
+
+  if (donations.length > 0) {
+    elements.tronscanDelay.hidden = true;
+    return;
+  }
+
+  let latest = null;
+  for (const item of transfers) {
+    const ts = parseTimestamp(item) || 0;
+    if (!latest || ts > latest.ts) {
+      latest = { ts, tx: getTxId(item) };
+    }
+  }
+
+  elements.delayWalletLink.href = buildWalletUrl();
+  if (latest?.tx) {
+    elements.delayTxLink.href = buildTxUrl(latest.tx);
+    elements.delayTxLink.textContent = `Latest tx ${shortTx(latest.tx)}`;
+  } else {
+    elements.delayTxLink.href = buildWalletUrl();
+    elements.delayTxLink.textContent = "Latest tx";
+  }
+  elements.tronscanDelay.hidden = false;
+}
+
 async function refresh() {
   showCorsWarning(false);
   try {
@@ -380,10 +463,12 @@ async function refresh() {
     updateProgress(totalRaised);
     renderDonations(donations);
     renderLiveFeed(donations, false);
+    updateDelayWarning(transfers, donations);
     updateLastUpdated();
   } catch (error) {
     showCorsWarning(true);
     renderLiveFeed([], true);
+    updateDelayWarning([], []);
   }
 }
 

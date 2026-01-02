@@ -259,6 +259,29 @@ a:hover {
   color: #ffe9c8;
 }
 
+.warning-banner {
+  margin-top: 12px;
+  background: rgba(255, 180, 80, 0.16);
+  border: 1px solid rgba(255, 180, 80, 0.35);
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: #ffe9c8;
+  font-size: 0.8rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.warning-banner a {
+  color: #ffe9c8;
+  text-decoration: underline;
+}
+
+.warning-banner .divider {
+  opacity: 0.8;
+}
+
 .mini-feed {
   margin-top: 16px;
   padding: 12px;
