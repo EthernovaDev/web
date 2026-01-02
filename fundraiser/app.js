@@ -43,6 +43,7 @@ const elements = {
   latestTxBtn: $("btnLatestTx"),
   latestTxCaption: $("latestTxCaption"),
   dataSource: $("dataSource"),
+  dataRecords: $("dataRecords"),
   goalValue: $("goalValue"),
   raisedValue: $("raisedValue"),
   remainingValue: $("remainingValue"),
@@ -250,6 +251,12 @@ function setDataSource(label, base) {
   if (elements.diagBase) {
     elements.diagBase.textContent = base || "-";
   }
+}
+
+function updateDataRecords(count) {
+  if (!elements.dataRecords) return;
+  const value = Number.isFinite(count) ? count : "-";
+  elements.dataRecords.textContent = `Records: ${value}`;
 }
 
 function setLatestTxState(tx, reason) {
@@ -685,7 +692,7 @@ async function fetchTransfersFromBase(base, sourceLabel) {
       }
 
       results = results.concat(list);
-      start += list.length;
+        start += limit;
     }
 
     return results;
@@ -887,6 +894,14 @@ function renderDonations(donations) {
   }
 }
 
+function renderSummary(totalRaised) {
+  updateProgress(totalRaised);
+}
+
+function renderMiniFeed(donations, hasError) {
+  renderLiveFeed(donations, hasError);
+}
+
 function renderLiveFeed(donations, hasError) {
   const list = donations.slice(0, FEED_LIMIT);
   elements.feedList.innerHTML = "";
@@ -983,9 +998,9 @@ async function refresh() {
     const latestTx = donations[0]?.tx;
     const knownTx = getKnownTxHashes()[0] || "";
 
-    updateProgress(totalRaised);
+    renderSummary(totalRaised);
     renderDonations(donations);
-    renderLiveFeed(donations, false);
+    renderMiniFeed(donations, false);
     updateDelayWarning(transfers, donations, latestTx || knownTx);
     updateKnownTxNotice(transfers, false);
     setLatestTxState(latestTx, donations.length ? "" : "No donations detected from API");
@@ -994,6 +1009,7 @@ async function refresh() {
     state.diagnostics.httpStatus = status ? `HTTP ${status}` : "-";
     state.diagnostics.records = transfers.length;
     state.diagnostics.incoming = donations.length;
+    updateDataRecords(state.diagnostics.records);
     state.diagnostics.error = "";
     updateDiagnosticsUI();
   } catch (error) {
@@ -1015,7 +1031,7 @@ async function refresh() {
     if (!isProxyConfigured()) {
       showProxyBanner(true);
     }
-    renderLiveFeed([], true);
+    renderMiniFeed([], true);
     updateDelayWarning([], [], null);
     updateKnownTxNotice([], true);
     setLatestTxState(null, "API unavailable");
@@ -1023,6 +1039,7 @@ async function refresh() {
     state.diagnostics.httpStatus = status ? `HTTP ${status}` : "-";
     state.diagnostics.records = 0;
     state.diagnostics.incoming = 0;
+    updateDataRecords(0);
     const snippetText = upstreamSnippet ? ` Upstream: ${upstreamSnippet}` : "";
     state.diagnostics.error = `${error?.message || "Unknown error"}${snippetText}${hint}`;
     updateDiagnosticsUI();
