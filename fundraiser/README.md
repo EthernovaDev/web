@@ -11,6 +11,7 @@ All runtime settings live at the top of `fundraiser/app.js` in the `CONFIG` obje
 - `DEADLINE_DAYS`
 - `USDT_CONTRACT_TRON`
 - `API_BASE`
+- `API_BASES`
 - `API_MODE` (`direct` or `proxy`)
 - `PROXY_BASE`
 - `TRANSFERS_PATH`
@@ -35,6 +36,7 @@ The page uses public TronScan endpoints. If the browser blocks requests due to C
 
 - Set `API_MODE` to `proxy` and `PROXY_BASE` to your proxy base URL.
 - The UI will show a banner if live data is temporarily unavailable.
+- `API_BASES` controls the direct fallback order; the first working base will be used.
 
 ## Cloudflare Worker
 Use the included `worker/` folder to create a simple proxy that adds the TronScan API key:

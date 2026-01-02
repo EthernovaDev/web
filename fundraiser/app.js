@@ -5,6 +5,10 @@
   DEADLINE_DAYS: 45,
   USDT_CONTRACT_TRON: "TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj",
   API_BASE: "https://apilist.tronscanapi.com",
+  API_BASES: [
+    "https://apilist.tronscanapi.com",
+    "https://apilist.tronscan.org",
+  ],
   API_MODE: "direct",
   PROXY_BASE: "",
   TRANSFERS_PATH: "/api/token_trc20/transfers",
@@ -65,11 +69,13 @@ const elements = {
   diagnosticsToggle: $("diagnosticsToggle"),
   diagnosticsPanel: $("diagnosticsPanel"),
   diagSource: $("diagSource"),
+  diagBase: $("diagBase"),
   diagFetchTime: $("diagFetchTime"),
   diagStatus: $("diagStatus"),
   diagRecords: $("diagRecords"),
   diagIncoming: $("diagIncoming"),
   diagLatestTx: $("diagLatestTx"),
+  diagKnownTx: $("diagKnownTx"),
   diagError: $("diagError"),
   diagAttempts: $("diagAttempts"),
   copyDiagnostics: $("copyDiagnostics"),
@@ -83,11 +89,13 @@ const state = {
   latestIncomingTxUrl: "",
   diagnostics: {
     source: "-",
+    base: "-",
     lastFetch: "-",
     httpStatus: "-",
     records: 0,
     incoming: 0,
     latestTx: "-",
+    knownTx: "-",
     error: "",
     attempts: [],
     notes: [],
@@ -113,6 +121,14 @@ function getBaseByMode(mode) {
     return sanitizeBase(CONFIG.PROXY_BASE);
   }
   return sanitizeBase(CONFIG.API_BASE);
+}
+
+function getApiBases() {
+  if (Array.isArray(CONFIG.API_BASES) && CONFIG.API_BASES.length > 0) {
+    return CONFIG.API_BASES.map((base) => sanitizeBase(base)).filter(Boolean);
+  }
+  const fallback = sanitizeBase(CONFIG.API_BASE);
+  return fallback ? [fallback] : [];
 }
 
 function formatUSDT(value) {
@@ -206,13 +222,18 @@ function showProxyBanner(show) {
   elements.proxyBanner.hidden = !show;
 }
 
-function setDataSource(label) {
+function setDataSource(label, base) {
   if (elements.dataSource) {
-    elements.dataSource.textContent = `Source: ${label}`;
+    const suffix = base ? ` (${base})` : "";
+    elements.dataSource.textContent = `Source: ${label}${suffix}`;
   }
   state.diagnostics.source = label;
+  state.diagnostics.base = base || "-";
   if (elements.diagSource) {
     elements.diagSource.textContent = label || "-";
+  }
+  if (elements.diagBase) {
+    elements.diagBase.textContent = base || "-";
   }
 }
 
@@ -266,6 +287,9 @@ function updateDiagnosticsUI() {
   elements.diagStatus.textContent = state.diagnostics.httpStatus || "-";
   elements.diagRecords.textContent = String(state.diagnostics.records ?? 0);
   elements.diagIncoming.textContent = String(state.diagnostics.incoming ?? 0);
+  if (elements.diagKnownTx) {
+    elements.diagKnownTx.textContent = state.diagnostics.knownTx || "-";
+  }
   elements.diagError.textContent = state.diagnostics.error || "-";
   if (elements.diagAttempts) {
     const attempts = state.diagnostics.attempts.slice();
@@ -280,11 +304,13 @@ function updateDiagnosticsUI() {
 function copyDiagnosticsToClipboard() {
   const lines = [
     `Source: ${state.diagnostics.source}`,
+    `Base: ${state.diagnostics.base}`,
     `Last fetch: ${state.diagnostics.lastFetch}`,
     `HTTP status: ${state.diagnostics.httpStatus}`,
     `Records: ${state.diagnostics.records}`,
     `Incoming matched: ${state.diagnostics.incoming}`,
     `Latest tx: ${state.diagnostics.latestTx}`,
+    `Known tx: ${state.diagnostics.knownTx}`,
     `Error: ${state.diagnostics.error || "-"}`,
   ];
   if (state.diagnostics.notes.length > 0) {
@@ -320,10 +346,14 @@ function updateKnownTxNotice(records, hasError) {
   if (!elements.knownTxNotice || !elements.knownTxButton) return;
   const known = getKnownTxHashes();
   if (known.length === 0) {
+    state.diagnostics.knownTx = "-";
+    if (elements.diagKnownTx) elements.diagKnownTx.textContent = "-";
     elements.knownTxNotice.hidden = true;
     return;
   }
   if (hasError) {
+    state.diagnostics.knownTx = "UNAVAILABLE";
+    if (elements.diagKnownTx) elements.diagKnownTx.textContent = "UNAVAILABLE";
     elements.knownTxNotice.hidden = true;
     return;
   }
@@ -331,6 +361,8 @@ function updateKnownTxNotice(records, hasError) {
     const tx = typeof item === "string" ? item : item?.tx ?? getTxId(item);
     return tx ? known.includes(tx) : false;
   });
+  state.diagnostics.knownTx = found ? "FOUND" : "NOT FOUND";
+  if (elements.diagKnownTx) elements.diagKnownTx.textContent = state.diagnostics.knownTx;
   elements.knownTxNotice.hidden = found;
   const firstKnown = known[0];
   elements.knownTxButton.dataset.tx = firstKnown;
@@ -351,21 +383,14 @@ function buildTxUrl(tx) {
 
 function createTransferUrl(base, start, limit, options = {}) {
   const normalizedBase = apiBase(base);
+  const confirm = options.confirm === false ? "false" : "true";
   const params = new URLSearchParams({
-    limit: String(limit),
     start: String(start),
+    limit: String(limit),
     contract_address: CONFIG.USDT_CONTRACT_TRON,
-    _: String(Date.now()),
+    relatedAddress: CONFIG.TRON_ADDRESS,
+    confirm,
   });
-  const mode = options.mode || CONFIG.PRIMARY_QUERY_MODE;
-  if (mode === "address") {
-    params.set("address", CONFIG.TRON_ADDRESS);
-  } else {
-    params.set("relatedAddress", CONFIG.TRON_ADDRESS);
-  }
-  if (options.confirm !== false) {
-    params.set("confirm", "true");
-  }
   const path = options.path || CONFIG.TRANSFERS_PATH;
   return `${normalizedBase}${path}?${params.toString()}`;
 }
@@ -429,7 +454,7 @@ async function readErrorBody(res) {
   try {
     const text = await res.text();
     if (!text) return "";
-    return text.replace(/\s+/g, " ").slice(0, 160);
+    return text.replace(/\s+/g, " ").slice(0, 500);
   } catch {
     return "";
   }
@@ -521,13 +546,23 @@ function getFromAddress(item) {
     item?.from_address_base58 ??
     item?.fromAddress ??
     item?.from ??
+    item?.transferInfo?.from ??
+    item?.transferInfo?.owner_address ??
+    item?.contractData?.owner_address ??
     item?.from_address_hex ??
     ""
   );
 }
 
 function getTxId(item) {
-  return item?.transaction_id ?? item?.txID ?? item?.hash ?? item?.transaction_id_hex ?? "";
+  return (
+    item?.transaction_id ??
+    item?.txID ??
+    item?.txid ??
+    item?.hash ??
+    item?.transaction_id_hex ??
+    ""
+  );
 }
 
 function convertAmount(raw, decimals) {
@@ -655,7 +690,7 @@ async function fetchTransfersFromBase(base, sourceLabel) {
 }
 
 async function fetchTransfers() {
-  const directBase = getBaseByMode("direct");
+  const apiBases = getApiBases();
   const proxyBase = getBaseByMode("proxy");
   let lastError = null;
   let lastStatus = null;
@@ -675,7 +710,7 @@ async function fetchTransfers() {
     }
     const result = await fetchTransfersFromBase(base, label);
     lastStatus = result.status;
-    return { transfers: result.transfers, source: label, status: result.status };
+    return { transfers: result.transfers, source: label, base, status: result.status };
   };
 
   if (CONFIG.API_MODE === "proxy") {
@@ -683,24 +718,44 @@ async function fetchTransfers() {
       return await tryFetch(proxyBase, "Proxy");
     } catch (error) {
       lastError = error;
-      if (directBase) {
-        try {
-          return await tryFetch(directBase, "Direct Tronscan API");
-        } catch (fallbackError) {
-          lastError = fallbackError;
+      const shouldFallback =
+        error?.status === 400 ||
+        error?.status === 403 ||
+        error?.status === 429 ||
+        error?.name === "TypeError";
+      if (shouldFallback) {
+        for (const base of apiBases) {
+          try {
+            return await tryFetch(base, "Direct Tronscan API");
+          } catch (fallbackError) {
+            lastError = fallbackError;
+          }
         }
       }
     }
   } else {
-    try {
-      return await tryFetch(directBase, "Direct Tronscan API");
-    } catch (error) {
-      lastError = error;
+    for (const base of apiBases) {
+      try {
+        return await tryFetch(base, "Direct Tronscan API");
+      } catch (error) {
+        lastError = error;
+        const shouldFallback =
+          error?.status === 400 ||
+          error?.status === 403 ||
+          error?.status === 429 ||
+          error?.name === "TypeError";
+        if (!shouldFallback) {
+          break;
+        }
+      }
+    }
+    if (proxyBase) {
       const shouldFallback =
-        error?.status === 403 ||
-        error?.status === 429 ||
-        error?.name === "TypeError";
-      if (shouldFallback && proxyBase) {
+        lastError?.status === 400 ||
+        lastError?.status === 403 ||
+        lastError?.status === 429 ||
+        lastError?.name === "TypeError";
+      if (shouldFallback) {
         return await tryFetch(proxyBase, "Proxy");
       }
     }
@@ -892,7 +947,7 @@ async function refresh() {
   try {
     showErrorBanner("");
     showProxyBanner(CONFIG.API_MODE === "proxy" && !CONFIG.PROXY_BASE);
-    const { transfers, source, status } = await fetchTransfers();
+    const { transfers, source, status, base } = await fetchTransfers();
     const { donations, totalRaised } = prepareDonations(transfers);
     const latestTx = donations[0]?.tx;
     const knownTx = getKnownTxHashes()[0] || "";
@@ -903,7 +958,7 @@ async function refresh() {
     updateDelayWarning(transfers, donations, latestTx || knownTx);
     updateKnownTxNotice(transfers, false);
     setLatestTxState(latestTx, donations.length ? "" : "No donations detected from API");
-    setDataSource(source);
+    setDataSource(source, base);
     updateLastUpdated();
     state.diagnostics.httpStatus = status ? `HTTP ${status}` : "-";
     state.diagnostics.records = transfers.length;
@@ -923,7 +978,7 @@ async function refresh() {
     updateDelayWarning([], [], null);
     updateKnownTxNotice([], true);
     setLatestTxState(null, "API unavailable");
-    setDataSource("Unavailable");
+    setDataSource("Unavailable", "-");
     state.diagnostics.httpStatus = status ? `HTTP ${status}` : "-";
     state.diagnostics.records = 0;
     state.diagnostics.incoming = 0;
@@ -1034,7 +1089,8 @@ function init() {
   if (elements.feedRefreshSeconds) {
     elements.feedRefreshSeconds.textContent = String(CONFIG.REFRESH_SECONDS);
   }
-  setDataSource(CONFIG.API_MODE === "proxy" ? "Proxy" : "Direct Tronscan API");
+  const initialBase = CONFIG.API_MODE === "proxy" ? CONFIG.PROXY_BASE : getApiBases()[0];
+  setDataSource(CONFIG.API_MODE === "proxy" ? "Proxy" : "Direct Tronscan API", initialBase || "-");
   setLatestTxState(null, "No donations detected from API");
   showProxyBanner(CONFIG.API_MODE === "proxy" && !CONFIG.PROXY_BASE);
   updateDeadline();

@@ -1,4 +1,4 @@
-<!doctype html>
+ï»¿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -78,10 +78,10 @@
         </div>
         <div class="tiny">Keep a small amount of TRX in your wallet for network fees.</div>
         <div class="button-row">
-          <a class="btn primary" id="btnVerifyWallet" href="#" target="_blank" rel="noopener">Verify wallet on Tronscan</a>
-          <a class="btn" id="btnLatestTx" href="#" target="_blank" rel="noopener" aria-disabled="true">Latest tx</a>
+          <a class="btn primary" id="btnVerifyWallet" href="https://tronscan.org/#/address/TVYT4XtYtnBEg5VnKNUnx1n8oUeZ8mq2Lg" target="_blank" rel="noopener noreferrer">Verify wallet on Tronscan</a>
+          <a class="btn" id="btnLatestTx" href="#" target="_blank" rel="noopener noreferrer" aria-disabled="true">Latest tx</a>
         </div>
-        <div class="tiny" id="latestTxCaption">Latest: —</div>
+        <div class="tiny" id="latestTxCaption">Latest: â€”</div>
         <div class="tiny" id="dataSource">Source: Direct Tronscan API</div>
         <div class="mini-feed">
           <div class="mini-feed-header">
@@ -92,7 +92,7 @@
           <div class="tiny" id="feedEmpty">No donations yet. Be the first to support the listing fee!</div>
         </div>
         <div class="known-notice" id="knownTxNotice" hidden>
-          Known confirmed donation tx is not present in API results yet (indexing delay or rate limit).
+          TronScan API indexing delay: the tx is visible on Tronscan UI but not returned by API yet.
           <button class="btn" id="btnKnownTx" type="button">Open known tx on Tronscan</button>
         </div>
         <div class="diagnostics">
@@ -100,25 +100,27 @@
           <div class="diagnostics-panel" id="diagnosticsPanel" hidden>
             <div class="diag-grid">
               <div class="diag-row"><span class="diag-label">Source</span><span id="diagSource">-</span></div>
+              <div class="diag-row"><span class="diag-label">Base</span><span id="diagBase">-</span></div>
               <div class="diag-row"><span class="diag-label">Last fetch</span><span id="diagFetchTime">-</span></div>
               <div class="diag-row"><span class="diag-label">HTTP status</span><span id="diagStatus">-</span></div>
               <div class="diag-row"><span class="diag-label">Records</span><span id="diagRecords">-</span></div>
               <div class="diag-row"><span class="diag-label">Incoming matched</span><span id="diagIncoming">-</span></div>
-              <div class="diag-row"><span class="diag-label">Latest incoming tx</span><a id="diagLatestTx" href="#" target="_blank" rel="noopener">-</a></div>
+              <div class="diag-row"><span class="diag-label">Latest incoming tx</span><a id="diagLatestTx" href="#" target="_blank" rel="noopener noreferrer">-</a></div>
+              <div class="diag-row"><span class="diag-label">Known tx</span><span id="diagKnownTx">-</span></div>
               <div class="diag-row"><span class="diag-label">Error</span><span id="diagError">-</span></div>
             </div>
             <div class="diag-actions">
               <button class="btn" id="copyDiagnostics" type="button">Copy diagnostics</button>
-              <a class="btn" id="debugLink" href="/fundraiser/debug.html" target="_blank" rel="noopener" hidden>Open debug page</a>
+              <a class="btn" id="debugLink" href="/fundraiser/debug.html" target="_blank" rel="noopener noreferrer" hidden>Open debug page</a>
             </div>
             <pre class="diag-attempts" id="diagAttempts"></pre>
           </div>
         </div>
         <div class="warning-banner" id="tronscanDelay" hidden>
           Live data may be delayed by Tronscan indexing. Please verify recent donations on Tronscan.
-          <a id="delayWalletLink" href="#" target="_blank" rel="noopener">Verify wallet</a>
+          <a id="delayWalletLink" href="#" target="_blank" rel="noopener noreferrer">Verify wallet</a>
           <span class="divider">|</span>
-          <a id="delayTxLink" href="#" target="_blank" rel="noopener">Latest tx</a>
+          <a id="delayTxLink" href="#" target="_blank" rel="noopener noreferrer">Latest tx</a>
         </div>
         <div class="cors-banner" id="proxyBanner" hidden>
           Proxy not configured (PROXY_BASE is empty). Live data may fail due to rate limits.
@@ -162,7 +164,7 @@
 
   <footer class="site-footer">
     <div class="container footer">
-      <span>© 2026 Ethernova. All rights reserved.</span>
+      <span>Â© 2026 Ethernova. All rights reserved.</span>
       <div class="footer-links">
         <a href="/">Home</a>
         <a href="/stats.html">Network Stats</a>
@@ -174,5 +176,7 @@
   <script src="app.js"></script>
 </body>
 </html>
+
+
 
 

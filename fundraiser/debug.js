@@ -2,6 +2,10 @@ const FALLBACK_CONFIG = {
   TRON_ADDRESS: "TVYT4XtYtnBEg5VnKNUnx1n8oUeZ8mq2Lg",
   USDT_CONTRACT_TRON: "TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj",
   API_BASE: "https://apilist.tronscanapi.com",
+  API_BASES: [
+    "https://apilist.tronscanapi.com",
+    "https://apilist.tronscan.org",
+  ],
   PROXY_BASE: "",
   TRANSFERS_PATH: "/api/token_trc20/transfers",
   FALLBACK_PATH: "/api/token_trc20/transfers",
@@ -21,11 +25,12 @@ const CONFIG = typeof window !== "undefined" && window.FUNDRAISER_CONFIG
 const $ = (id) => document.getElementById(id);
 
 const elements = {
-  directUrl: $("directUrl"),
+  base1Url: $("base1Url"),
+  base2Url: $("base2Url"),
   proxyUrl: $("proxyUrl"),
-  btnFetchDirect: $("btnFetchDirect"),
+  btnFetchBase1: $("btnFetchBase1"),
+  btnFetchBase2: $("btnFetchBase2"),
   btnFetchProxy: $("btnFetchProxy"),
-  btnTestProxy: $("btnTestProxy"),
   fetchStatus: $("fetchStatus"),
   fetchSource: $("fetchSource"),
   rawJson: $("rawJson"),
@@ -52,23 +57,24 @@ function apiBase(base) {
   return sanitizeBase(base);
 }
 
+function getApiBases() {
+  if (Array.isArray(CONFIG.API_BASES) && CONFIG.API_BASES.length > 0) {
+    return CONFIG.API_BASES.map((base) => sanitizeBase(base)).filter(Boolean);
+  }
+  const fallback = sanitizeBase(CONFIG.API_BASE);
+  return fallback ? [fallback] : [];
+}
+
 function createTransferUrl(base, start, limit, options = {}) {
   const normalizedBase = apiBase(base);
+  const confirm = options.confirm === false ? "false" : "true";
   const params = new URLSearchParams({
-    limit: String(limit),
     start: String(start),
+    limit: String(limit),
     contract_address: CONFIG.USDT_CONTRACT_TRON,
-    _: String(Date.now()),
+    relatedAddress: CONFIG.TRON_ADDRESS,
+    confirm,
   });
-  const mode = options.mode || CONFIG.PRIMARY_QUERY_MODE;
-  if (mode === "address") {
-    params.set("address", CONFIG.TRON_ADDRESS);
-  } else {
-    params.set("relatedAddress", CONFIG.TRON_ADDRESS);
-  }
-  if (options.confirm !== false) {
-    params.set("confirm", "true");
-  }
   const path = options.path || CONFIG.TRANSFERS_PATH;
   return `${normalizedBase}${path}?${params.toString()}`;
 }
@@ -128,7 +134,7 @@ async function readErrorBody(res) {
   try {
     const text = await res.text();
     if (!text) return "";
-    return text.replace(/\s+/g, " ").slice(0, 160);
+    return text.replace(/\s+/g, " ").slice(0, 500);
   } catch {
     return "";
   }
@@ -157,10 +163,18 @@ function truncatePayload(payload) {
 }
 
 function updateUrls() {
-  if (elements.directUrl) {
-    elements.directUrl.textContent = CONFIG.API_BASE
-      ? createTransferUrl(CONFIG.API_BASE, 0, 20, {
-          mode: CONFIG.PRIMARY_QUERY_MODE,
+  const bases = getApiBases();
+  if (elements.base1Url) {
+    elements.base1Url.textContent = bases[0]
+      ? createTransferUrl(bases[0], 0, 20, {
+          confirm: true,
+          path: CONFIG.TRANSFERS_PATH,
+        })
+      : "-";
+  }
+  if (elements.base2Url) {
+    elements.base2Url.textContent = bases[1]
+      ? createTransferUrl(bases[1], 0, 20, {
           confirm: true,
           path: CONFIG.TRANSFERS_PATH,
         })
@@ -169,7 +183,6 @@ function updateUrls() {
   if (elements.proxyUrl) {
     elements.proxyUrl.textContent = CONFIG.PROXY_BASE
       ? createTransferUrl(CONFIG.PROXY_BASE, 0, 20, {
-          mode: CONFIG.PRIMARY_QUERY_MODE,
           confirm: true,
           path: CONFIG.PROXY_TRANSFERS_PATH,
         })
@@ -308,21 +321,18 @@ async function fetchTransfersFromBase(base, sourceLabel) {
   return { transfers, status: lastStatus, payload: firstPayload };
 }
 
-async function fetchAndRender(mode) {
+async function fetchAndRender(base, source) {
   updateUrls();
   state.attempts = [];
   state.payload = null;
   state.transfers = [];
-  state.source = mode === "proxy" ? "Proxy" : "Direct Tronscan API";
+  state.source = source;
   state.status = "-";
-
-  const base = mode === "proxy" ? sanitizeBase(CONFIG.PROXY_BASE) : sanitizeBase(CONFIG.API_BASE);
   if (!base) {
-    renderStatus("Status: Proxy base not configured");
+    renderStatus("Status: Base not configured");
     renderPayload();
     return;
   }
-
   renderStatus("Status: Loading...");
 
   try {
@@ -356,8 +366,15 @@ function searchTx() {
 
 document.addEventListener("DOMContentLoaded", () => {
   updateUrls();
-  elements.btnFetchDirect?.addEventListener("click", () => fetchAndRender("direct"));
-  elements.btnFetchProxy?.addEventListener("click", () => fetchAndRender("proxy"));
-  elements.btnTestProxy?.addEventListener("click", () => fetchAndRender("proxy"));
+  const bases = getApiBases();
+  elements.btnFetchBase1?.addEventListener("click", () => {
+    fetchAndRender(bases[0], "Base #1");
+  });
+  elements.btnFetchBase2?.addEventListener("click", () => {
+    fetchAndRender(bases[1], "Base #2");
+  });
+  elements.btnFetchProxy?.addEventListener("click", () => {
+    fetchAndRender(sanitizeBase(CONFIG.PROXY_BASE), "Proxy");
+  });
   elements.btnSearch?.addEventListener("click", searchTx);
 });
