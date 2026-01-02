@@ -39,14 +39,11 @@ The page uses public TronScan endpoints. If the browser blocks requests due to C
 - `API_BASES` controls the direct fallback order; the first working base will be used.
 
 ## Cloudflare Worker
-Use the included `worker/` folder to create a simple proxy that adds the TronScan API key:
+Use the included `worker/` folder to create a proxy that adds the TronScan API key. The worker exposes:
 
-- `cd worker`
-- `wrangler login`
-- `wrangler secret put TRONSCAN_API_KEY` (paste your TronScan API key when prompted)
-- `wrangler deploy`
-- Copy the deployed Worker URL into `PROXY_BASE` in `fundraiser/app.js`.
-- Set `PROXY_TRANSFERS_PATH` to `/trc20/transfers` when using the worker.
+- `/health`
+- `/trc20/transfers` (primary for the frontend)
+- `/api/token_trc20/transfers` (alias)
 
 ### Secure Deployment (copy/paste)
 Do NOT commit your API key anywhere (no JS/HTML/README). The key must only live in Wrangler secrets.
@@ -57,15 +54,26 @@ Do NOT commit your API key anywhere (no JS/HTML/README). The key must only live 
 2) Authenticate:
    `wrangler login`
 
-3) From the `worker/` folder, set the secret:
-   `wrangler secret put TRONSCAN_API_KEY`
+3) From the worker folder:
+   `cd C:\dev\ethernova-web\worker`
 
-4) Deploy:
+4) Set the secret (exact name required):
+   `wrangler secret put TRONSCAN_API_KEY`
+   (paste your TronScan API key when prompted)
+
+5) Deploy:
    `wrangler deploy`
 
-5) Wrangler prints a Worker URL like:
+6) Wrangler prints a Worker URL like:
    `https://<worker-name>.<account>.workers.dev`
    Paste it into `PROXY_BASE` in `fundraiser/app.js`.
+   The frontend calls `${PROXY_BASE}/trc20/transfers`.
+
+### Test Commands
+Use these to validate the proxy after deploy:
+
+- `curl https://<worker-name>.<account>.workers.dev/health`
+- `curl "https://<worker-name>.<account>.workers.dev/trc20/transfers?start=0&limit=20&confirm=true&contract_address=TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj&relatedAddress=TVYT4XtYtnBEg5VnKNUnx1n8oUeZ8mq2Lg"`
 
 ## Debugging
 The fundraiser page has a diagnostics panel and a dedicated debug page:
@@ -73,7 +81,7 @@ The fundraiser page has a diagnostics panel and a dedicated debug page:
 - `/fundraiser/debug.html` (do not share publicly).
 - To show the debug link in the UI, append `?debug=1` or set `DEBUG_ENABLED` to `true`.
 - Use the debug page to inspect raw API responses and search for specific tx hashes.
-- The debug page reads configuration from `fundraiser/app.js` when loaded.
+- The debug page uses its own config in `fundraiser/debug.js`.
 
 ## GitHub Pages
 Place this folder at the repo root. GitHub Pages will serve it at:
