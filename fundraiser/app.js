@@ -1,4 +1,4 @@
-﻿const CONFIG = {
+const CONFIG = {
   TRON_ADDRESS: "TVYT4XtYtnBEg5VnKNUnx1n8oUeZ8mq2Lg",
   GOAL_USDT: 3900,
   LAUNCH_DATE_UTC: "2026-01-01T00:00:00Z",
@@ -16,6 +16,8 @@
   DEBUG_ENABLED: false,
   KNOWN_TX_HASHES: ["9402383dc1754a3b487fb3483092e869754e2922016e262974852049b0295de2"],
 };
+
+const BUILD_ID = "20260102-bootfix-1";
 
 if (typeof window !== "undefined") {
   window.FUNDRAISER_CONFIG = CONFIG;
@@ -61,6 +63,7 @@ const elements = {
   diagnosticsPanel: $("diagnosticsPanel"),
   diagSource: $("diagSource"),
   diagBase: $("diagBase"),
+  diagBuild: $("diagBuild"),
   diagQuery: $("diagQuery"),
   diagConfirm: $("diagConfirm"),
   diagFetchTime: $("diagFetchTime"),
@@ -83,6 +86,7 @@ const state = {
   diagnostics: {
     source: "Proxy",
     base: CONFIG.PROXY_BASE,
+    build: BUILD_ID,
     query: "pending",
     confirm: "0",
     lastFetch: "pending",
@@ -162,6 +166,10 @@ function formatChicago(date, withTime) {
   return `${formatted} (Chicago)`;
 }
 
+function nowChicago() {
+  return formatChicago(new Date(), true);
+}
+
 function timeAgo(ts) {
   if (!ts) return "-";
   const diffMs = Date.now() - ts;
@@ -239,6 +247,9 @@ function setDataSource(label, base) {
   if (elements.diagBase) {
     elements.diagBase.textContent = base || "not configured";
   }
+  if (elements.diagBuild) {
+    elements.diagBuild.textContent = BUILD_ID;
+  }
 }
 
 function updateDataRecords(count) {
@@ -303,6 +314,9 @@ function updateDiagnosticsUI() {
   if (elements.diagConfirm) {
     elements.diagConfirm.textContent = state.diagnostics.confirm || "-";
   }
+  if (elements.diagBuild) {
+    elements.diagBuild.textContent = state.diagnostics.build || BUILD_ID;
+  }
   if (elements.diagKnownTx) {
     elements.diagKnownTx.textContent = state.diagnostics.knownTx || "pending";
   }
@@ -315,6 +329,11 @@ function updateDiagnosticsUI() {
     }
     elements.diagAttempts.textContent = attempts.length ? attempts.join("\n") : "No attempts yet.";
   }
+}
+
+function setDiagnostics(status) {
+  state.diagnostics.query = status;
+  updateDiagnosticsUI();
 }
 
 function copyDiagnosticsToClipboard() {
@@ -930,8 +949,8 @@ function updateDelayWarning(transfers, donations, latestTx) {
 async function refresh() {
   state.diagnostics.attempts = [];
   state.diagnostics.notes = [];
-  state.diagnostics.lastFetch = new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC";
   state.diagnostics.query = "running";
+  state.diagnostics.lastFetch = nowChicago();
   state.diagnostics.httpStatus = "pending";
   state.diagnostics.records = 0;
   state.diagnostics.incoming = 0;
@@ -946,7 +965,7 @@ async function refresh() {
     state.diagnostics.error = "Missing TRON_ADDRESS in config.";
   }
   if (!isProxyConfigured()) {
-    configError = "Proxy not configured — live donations cannot load. Configure PROXY_BASE.";
+    configError = "Proxy not configured - live donations cannot load. Configure PROXY_BASE.";
     state.diagnostics.error = "Proxy base not configured.";
   }
   if (configError) {
@@ -959,6 +978,7 @@ async function refresh() {
   } else {
     showErrorBanner("");
   }
+
   try {
     showProxyBanner(!isProxyConfigured());
     const { transfers, source, status, base } = await fetchTransfers();
@@ -979,8 +999,6 @@ async function refresh() {
     state.diagnostics.incoming = donations.length;
     updateDataRecords(state.diagnostics.records);
     state.diagnostics.error = "";
-    state.diagnostics.query = "done";
-    updateDiagnosticsUI();
   } catch (error) {
     const status = error?.status;
     const statusNote = status ? ` (HTTP ${status})` : "";
@@ -1007,18 +1025,17 @@ async function refresh() {
     updateKnownTxNotice([], true);
     setLatestTxState(null, "API unavailable");
     setDataSource("Proxy", getProxyBase() || "not configured");
-    state.diagnostics.httpStatus = status ? `HTTP ${status}` : "ERROR";
+    state.diagnostics.httpStatus = "error";
     state.diagnostics.records = 0;
     state.diagnostics.incoming = 0;
     updateDataRecords(0);
     const snippetText = upstreamSnippet ? ` Upstream: ${upstreamSnippet}` : "";
     state.diagnostics.error = `${error?.message || "Unknown error"}${snippetText}${hint}`;
+  } finally {
     state.diagnostics.query = "done";
     updateDiagnosticsUI();
   }
-}
-
-function setupCopy() {
+}\nfunction setupCopy() {
   if (!elements.copyButton) return;
   elements.copyButton.addEventListener("click", async () => {
     try {
@@ -1064,7 +1081,7 @@ function setupQr() {
   }
 }
 
-function init() {
+function initConfig() {
   console.log("[fundraiser] API_MODE =", CONFIG.API_MODE, "PROXY_BASE =", CONFIG.PROXY_BASE);
   if (!CONFIG.TRON_ADDRESS) {
     showErrorBanner("Fatal: wallet address missing in config. Live data disabled.");
@@ -1870,9 +1887,23 @@ for (let i = 0; i < 255; i += 1) {
   QRUtil.LOG_TABLE[QRUtil.EXP_TABLE[i]] = i;
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  init();
-  refresh();
-  setInterval(refresh, CONFIG.REFRESH_SECONDS * 1000);
-});
+function boot() {
+  try {
+    initConfig();
+    setDiagnostics("booted");
+    refresh();
+    clearInterval(window.__fundraiserTimer);
+    window.__fundraiserTimer = setInterval(refresh, CONFIG.REFRESH_SECONDS * 1000);
+  } catch (error) {
+    state.diagnostics.error = error?.message || String(error);
+    state.diagnostics.httpStatus = "error";
+    updateDiagnosticsUI();
+  }
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", boot, { once: true });
+} else {
+  boot();
+}
 
