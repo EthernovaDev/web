@@ -71,7 +71,8 @@ function createTransferUrl(base, start, limit, confirmValue, path) {
   const params = new URLSearchParams({
     start: String(start),
     limit: String(limit),
-    confirm: confirmValue ? "true" : "false",
+    confirm: "0",
+    direction: "in",
     contract_address: CONFIG.USDT_CONTRACT_TRON,
     relatedAddress: CONFIG.TRON_ADDRESS,
   });
@@ -371,7 +372,8 @@ async function fetchAndRender(base, sourceLabel, path) {
     renderPayload();
   } catch (error) {
     const statusText = error?.status ? `HTTP ${error.status}` : "Error";
-    state.errorSnippet = error?.body || error?.message || "Fetch failed";
+    const hint = error?.status === 400 ? " Check confirm param: must be 0/1/0,1 not true/false." : "";
+    state.errorSnippet = `${error?.body || error?.message || "Fetch failed"}${hint}`;
     renderStatus(statusText, sourceLabel);
     renderPayload();
   }

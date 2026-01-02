@@ -70,6 +70,8 @@ const elements = {
   diagnosticsPanel: $("diagnosticsPanel"),
   diagSource: $("diagSource"),
   diagBase: $("diagBase"),
+  diagQuery: $("diagQuery"),
+  diagConfirm: $("diagConfirm"),
   diagFetchTime: $("diagFetchTime"),
   diagStatus: $("diagStatus"),
   diagRecords: $("diagRecords"),
@@ -90,6 +92,8 @@ const state = {
   diagnostics: {
     source: "-",
     base: "-",
+    query: "-",
+    confirm: "-",
     lastFetch: "-",
     httpStatus: "-",
     records: 0,
@@ -298,6 +302,12 @@ function updateDiagnosticsUI() {
   elements.diagStatus.textContent = state.diagnostics.httpStatus || "-";
   elements.diagRecords.textContent = String(state.diagnostics.records ?? 0);
   elements.diagIncoming.textContent = String(state.diagnostics.incoming ?? 0);
+  if (elements.diagQuery) {
+    elements.diagQuery.textContent = state.diagnostics.query || "-";
+  }
+  if (elements.diagConfirm) {
+    elements.diagConfirm.textContent = state.diagnostics.confirm || "-";
+  }
   if (elements.diagKnownTx) {
     elements.diagKnownTx.textContent = state.diagnostics.knownTx || "-";
   }
@@ -316,6 +326,8 @@ function copyDiagnosticsToClipboard() {
   const lines = [
     `Source: ${state.diagnostics.source}`,
     `Base: ${state.diagnostics.base}`,
+    `Query: ${state.diagnostics.query}`,
+    `Confirm: ${state.diagnostics.confirm}`,
     `Last fetch: ${state.diagnostics.lastFetch}`,
     `HTTP status: ${state.diagnostics.httpStatus}`,
     `Records: ${state.diagnostics.records}`,
@@ -394,13 +406,13 @@ function buildTxUrl(tx) {
 
 function createTransferUrl(base, start, limit, options = {}) {
   const normalizedBase = apiBase(base);
-  const confirm = options.confirm === false ? "false" : "true";
   const params = new URLSearchParams({
     start: String(start),
     limit: String(limit),
+    confirm: "0",
+    direction: "in",
     contract_address: CONFIG.USDT_CONTRACT_TRON,
     relatedAddress: CONFIG.TRON_ADDRESS,
-    confirm,
   });
   const path = options.path || CONFIG.TRANSFERS_PATH;
   return `${normalizedBase}${path}?${params.toString()}`;
@@ -598,6 +610,11 @@ async function fetchTransfersFromBase(base, sourceLabel) {
 
     while (start < CONFIG.MAX_TX_SCAN && start < total) {
       const url = createTransferUrl(base, start, limit, options);
+      if (start === 0) {
+        const parsed = new URL(url);
+        state.diagnostics.query = parsed.searchParams.toString();
+        state.diagnostics.confirm = parsed.searchParams.get("confirm") || "-";
+      }
       let res;
       try {
         res = await fetch(url, { cache: "no-store" });
@@ -625,6 +642,7 @@ async function fetchTransfersFromBase(base, sourceLabel) {
         });
         const error = new Error(message);
         error.status = res.status;
+        error.body = body;
         throw error;
       }
 
@@ -982,8 +1000,18 @@ async function refresh() {
     const status = error?.status;
     const statusNote = status ? ` (HTTP ${status})` : "";
     const corsNote = error?.name === "TypeError" && !status ? " (CORS blocked)" : "";
+    let upstreamSnippet = "";
+    if (error?.body) {
+      try {
+        const parsed = JSON.parse(error.body);
+        if (parsed?.upstreamSnippet) upstreamSnippet = parsed.upstreamSnippet;
+      } catch {
+        upstreamSnippet = error.body;
+      }
+    }
+    const hint = status === 400 ? " Check confirm param: must be 0/1/0,1 not true/false." : "";
     const detail = error?.message ? ` Details: ${error.message}` : "";
-    showErrorBanner(`Live data may be delayed or rate-limited. Verify on Tronscan.${statusNote}${corsNote}${detail}`);
+    showErrorBanner(`Live data may be delayed or rate-limited. Verify on Tronscan.${statusNote}${corsNote}${detail}${hint}`);
     if (!isProxyConfigured()) {
       showProxyBanner(true);
     }
@@ -995,7 +1023,8 @@ async function refresh() {
     state.diagnostics.httpStatus = status ? `HTTP ${status}` : "-";
     state.diagnostics.records = 0;
     state.diagnostics.incoming = 0;
-    state.diagnostics.error = error?.message || "Unknown error";
+    const snippetText = upstreamSnippet ? ` Upstream: ${upstreamSnippet}` : "";
+    state.diagnostics.error = `${error?.message || "Unknown error"}${snippetText}${hint}`;
     updateDiagnosticsUI();
   }
 }
