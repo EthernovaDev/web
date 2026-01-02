@@ -1,0 +1,358 @@
+﻿:root {
+  color-scheme: dark;
+  --bg: #0b0f1c;
+  --panel: #12172b;
+  --panel-soft: rgba(18, 23, 43, 0.7);
+  --border: rgba(125, 150, 255, 0.2);
+  --text: #f4f6ff;
+  --muted: #b6bfdc;
+  --accent: #6fd3ff;
+  --accent-strong: #7f8bff;
+  --danger: #ff6b6b;
+  --warning: #ffb454;
+  --success: #48d597;
+  --radius: 16px;
+  --shadow: 0 16px 40px rgba(6, 10, 24, 0.45);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: radial-gradient(1200px 800px at 20% 10%, rgba(68, 98, 255, 0.25), transparent 60%),
+    linear-gradient(180deg, #0a0d1b 0%, #05070f 70%);
+  color: var(--text);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--accent);
+}
+
+.container {
+  width: min(100% - 32px, 1120px);
+  margin: 0 auto;
+}
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(8, 10, 22, 0.8);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+  gap: 16px;
+}
+
+.brand {
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  font-size: 0.95rem;
+}
+
+.nav-links {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.nav-links a {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.nav-links a.active,
+.nav-links a:hover {
+  color: var(--accent);
+}
+
+.hero {
+  display: grid;
+  gap: 28px;
+  padding: 40px 0 20px;
+}
+
+.hero-text h1 {
+  margin: 0 0 10px;
+  font-size: clamp(2rem, 3vw, 2.8rem);
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.35em;
+  font-size: 0.7rem;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+
+.subtitle {
+  margin: 0 0 24px;
+  color: var(--muted);
+  font-size: 1.05rem;
+}
+
+.card {
+  background: var(--panel-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+}
+
+.progress-card {
+  display: grid;
+  gap: 16px;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.label {
+  color: var(--muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.progress-percent {
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.deadline-date {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-strong));
+  transition: width 0.4s ease;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.stat .value {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.info-box {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(127, 139, 255, 0.15);
+  border: 1px solid rgba(127, 139, 255, 0.4);
+  color: var(--text);
+}
+
+.donation-card {
+  display: grid;
+  gap: 16px;
+  align-self: start;
+}
+
+.alert {
+  background: rgba(255, 100, 100, 0.15);
+  border: 1px solid rgba(255, 100, 100, 0.5);
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-weight: 600;
+  color: #ffd7d7;
+}
+
+.address-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.address-row code {
+  background: rgba(10, 14, 28, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  word-break: break-all;
+}
+
+.btn {
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  padding: 8px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(111, 211, 255, 0.2);
+}
+
+.btn.primary {
+  background: linear-gradient(135deg, rgba(111, 211, 255, 0.6), rgba(127, 139, 255, 0.8));
+  color: #06101a;
+  border-color: rgba(127, 139, 255, 0.6);
+}
+
+.qr-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 10px;
+  background: rgba(9, 12, 26, 0.6);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+#qrCanvas {
+  width: 180px;
+  height: 180px;
+}
+
+.button-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cors-banner {
+  background: rgba(255, 180, 80, 0.2);
+  border: 1px solid rgba(255, 180, 80, 0.4);
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: #ffe9c8;
+}
+
+.transparency ul {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+}
+
+.transparency li + li {
+  margin-top: 10px;
+}
+
+.donations .row {
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.table {
+  margin-top: 16px;
+}
+
+.table-header,
+.table-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1.2fr 1fr 1.2fr;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.85rem;
+}
+
+.table-header {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.7rem;
+}
+
+.table-row span,
+.table-row a {
+  color: var(--text);
+  font-size: 0.85rem;
+}
+
+.table-row a {
+  color: var(--accent);
+}
+
+.tiny {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.deadline-warning {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 140, 80, 0.2);
+  border: 1px solid rgba(255, 140, 80, 0.4);
+}
+
+.site-footer {
+  margin-top: 40px;
+  padding: 24px 0 32px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.footer-links {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+@media (min-width: 900px) {
+  .hero {
+    grid-template-columns: 1.2fr 0.8fr;
+    align-items: start;
+  }
+}
+
+@media (max-width: 720px) {
+  .table-header,
+  .table-row {
+    grid-template-columns: 1fr;
+  }
+
+  .table-row span,
+  .table-row a {
+    font-size: 0.8rem;
+  }
+}
