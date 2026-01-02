@@ -166,7 +166,7 @@ function formatChicago(date, withTime) {
     options.hour12 = true;
   }
   const formatted = new Intl.DateTimeFormat("en-US", options).format(date);
-  return `${formatted} (Chicago)`;
+  return formatted;
 }
 
 function nowChicago() {
