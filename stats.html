@@ -56,11 +56,11 @@
     <div class="card"><div class="label">Client Version</div><div class="value" id="clientVersion">-</div><div class="tiny" id="clientVersionFull">Full: -</div></div>
     <div class="card"><div class="label">Latest Block</div><div class="value" id="latestBlock">—</div><div class="tiny">Source: eth_blockNumber</div></div>
     <div class="card"><div class="label">Total Supply (NOVA)</div><div class="value" id="minedCoins">-</div><div class="tiny" id="supplyNote">Supply includes migration baseline.</div></div>
-    <div class="card"><div class="label">Ethash Epoch</div><div class="value" id="ethashEpoch">-</div><div class="tiny" id="dagSize">Est. DAG size: -</div></div>
+    <div class="card"><div class="label">Ethash Epoch</div><div class="value" id="ethashEpoch">-</div><div class="tiny" id="dagSize">Est. DAG size: -</div><div class="tiny" id="nextEpochEta">Next epoch in: -</div><div class="tiny" id="nextEpochBlocks">Blocks remaining: -</div></div>
     <div class="card"><div class="label">Gas Price (Gwei)</div><div class="value" id="gasPriceGwei">—</div><div class="tiny">Source: eth_gasPrice</div></div>
-    <div class="card"><div class="label">Avg Block Time (sec)</div><div class="value" id="avgBlockTimeSec">—</div><div class="tiny">Average of last 50 blocks</div></div>
+    <div class="card"><div class="label">Avg Block Time (sec)</div><div class="value" id="avgBlockTimeSec">—</div><div class="tiny" id="avgBlockTimeNote">Average of last 50 blocks • During network halts/fork incidents, block-time is shown as halted and chart points are omitted/capped.</div></div>
     <div class="card"><div class="label">TPS</div><div class="value" id="tps">—</div><div class="tiny">Approx. last 50 blocks</div></div>
-    <div class="card"><div class="label">Pending Tx</div><div class="value" id="pendingTx">-</div><div class="tiny">txpool_status (if enabled)</div></div>
+    <div class="card"><div class="label">Pending + Queued Tx</div><div class="value" id="pendingTx">-</div><div class="tiny" id="pendingTxNote">txpool_status pending + queued (internal RPC)</div></div>
     <div class="card"><div class="label">Chain Data (GB)</div><div class="value" id="chainDataGB">-</div><div class="tiny">Measured on VPS disk</div></div>
     <div class="card"><div class="label">Network Hashrate (GH/s)</div><div class="value" id="networkHashrateGHs">-</div><div class="tiny">Estimated from difficulty / block time</div></div>
     <div class="card"><div class="label">Avg Difficulty (G)</div><div class="value" id="avgDifficulty">-</div><div class="tiny" id="avgDifficultyRaw">Raw: -</div></div>
@@ -120,8 +120,11 @@
   const MIGRATION_BASELINE_SUPPLY = Number(CONFIG.MIGRATION_BASELINE_SUPPLY);
   const MIGRATION_START_ISO = typeof CONFIG.MIGRATION_START_ISO === "string" ? CONFIG.MIGRATION_START_ISO : "";
   const MIGRATION_START_MS = MIGRATION_START_ISO ? Date.parse(MIGRATION_START_ISO) : Number.NaN;
+  const MAX_BLOCK_TIME_SEC = Number(CONFIG.MAX_BLOCK_TIME_SEC) || 600;
 
   const ETHASH_EPOCH_LENGTH = 30000;
+  const HALT_NOTE = "During network halts/fork incidents, block-time is shown as halted and chart points are omitted/capped.";
+  const MOCK_HALT = new URLSearchParams(window.location.search).get("mockHalt") === "1";
   const DAG_BYTES_INIT = 1073741824;
   const DAG_BYTES_GROWTH = 8388608;
 
@@ -138,6 +141,33 @@
       maximumFractionDigits: digits,
       minimumFractionDigits: digits === 4 ? 4 : 0
     });
+  }
+
+  function parsePositiveNumber(value){
+    const n = Number(value);
+    if (!Number.isFinite(n) || n <= 0) return null;
+    return n;
+  }
+
+  function blockTimeState(value){
+    const n = parsePositiveNumber(value);
+    if (n === null) return { value: null, halted: true, reason: "data unavailable" };
+    if (n > MAX_BLOCK_TIME_SEC) return { value: null, halted: true, reason: "network halted" };
+    return { value: n, halted: false, reason: "" };
+  }
+
+  function clampBlockTimeForChart(value){
+    const n = parsePositiveNumber(value);
+    if (n === null) return null;
+    if (n > MAX_BLOCK_TIME_SEC) return null;
+    return n;
+  }
+
+  function formatPendingTx(value){
+    if (value === null) return "disabled";
+    const n = Number(value);
+    if (!Number.isFinite(n)) return "-";
+    return n.toLocaleString();
   }
 
   function shouldApplyMigration(iso){
@@ -172,14 +202,33 @@
     return bytes / (1024 * 1024 * 1024);
   }
 
-  function setEthashStats(latestBlock){
+  function formatDurationShort(seconds){
+    const total = Math.round(Number(seconds));
+    if (!Number.isFinite(total) || total <= 0) return "-";
+    const days = Math.floor(total / 86400);
+    const hours = Math.floor((total % 86400) / 3600);
+    const mins = Math.floor((total % 3600) / 60);
+    const secs = total % 60;
+    const parts = [];
+    if (days) parts.push(`${days}d`);
+    if (hours || (days && mins)) parts.push(`${hours}h`);
+    if (mins || (!days && !hours)) parts.push(`${mins}m`);
+    if (!days && !hours && mins < 1) parts.push(`${secs}s`);
+    return parts.slice(0, 2).join(" ");
+  }
+
+  function setEthashStats(latestBlock, btState){
     const height = Number(latestBlock);
     const epochEl = $("ethashEpoch");
     const dagEl = $("dagSize");
-    if (!epochEl || !dagEl) return;
+    const etaEl = $("nextEpochEta");
+    const blocksEl = $("nextEpochBlocks");
+    if (!epochEl || !dagEl || !etaEl || !blocksEl) return;
     if (!Number.isFinite(height)) {
       epochEl.textContent = "-";
       dagEl.textContent = "Est. DAG size: -";
+      etaEl.textContent = "Next epoch in: -";
+      blocksEl.textContent = "Blocks remaining: -";
       return;
     }
     const epoch = Math.floor(height / ETHASH_EPOCH_LENGTH);
@@ -188,6 +237,24 @@
     dagEl.textContent = Number.isFinite(dagGiB)
       ? `Est. DAG size: ${fmtNum(dagGiB, 2)} GB`
       : "Est. DAG size: -";
+
+    const nextStart = (epoch + 1) * ETHASH_EPOCH_LENGTH;
+    const remaining = Math.max(0, nextStart - height);
+    blocksEl.textContent = `Blocks remaining: ${remaining.toLocaleString()}`;
+
+    if (remaining <= 0) {
+      etaEl.textContent = "Next epoch: imminent";
+      return;
+    }
+
+    const avgSec = btState && Number.isFinite(btState.value) ? btState.value : null;
+    if (!avgSec || (btState && btState.halted)) {
+      etaEl.textContent = "ETA: —";
+      return;
+    }
+
+    const etaSeconds = remaining * avgSec;
+    etaEl.textContent = `Next epoch in: ${formatDurationShort(etaSeconds)}`;
   }
 
   function shortClientVersion(s){
@@ -253,7 +320,8 @@
 
   function setHalving(stats){
     const h = Number(stats.latestBlock);
-    const abt = Number(stats.avgBlockTimeSec);
+    const bt = blockTimeState(stats.avgBlockTimeSec);
+    const abt = bt.value;
     const updatedAt = stats.updatedAt ? Date.parse(stats.updatedAt) : Date.now();
     const nextB = nextHalvingBlock(h);
 
@@ -267,9 +335,10 @@
     const nextReward = rewardAt(nextB);
     const remaining = Math.max(0, nextB - h);
 
-    if (!Number.isFinite(abt) || abt <= 0) {
+    if (!Number.isFinite(abt)) {
+      const reason = bt.halted ? (bt.reason || "network halted") : "avgBlockTimeSec missing";
       $("halvingMain").textContent = `Next halving at block ${nextB.toLocaleString()}`;
-      $("halvingSub").textContent = `Reward: ${currentReward} → ${nextReward} NOVA • Remaining blocks: ${remaining.toLocaleString()} • ETA unavailable (avgBlockTimeSec missing)`;
+      $("halvingSub").textContent = `Reward: ${currentReward} → ${nextReward} NOVA • Remaining blocks: ${remaining.toLocaleString()} • ETA unavailable (${reason})`;
       return;
     }
 
@@ -286,10 +355,10 @@
 
   // Chart datasets (toggleable)
   const METRICS = [
-    { key: "avg",    label: "Avg Block Time (sec)", axis: "yAvg",    extract: (p)=>p.avg },
+    { key: "avg",    label: "Avg Block Time (sec)", axis: "yAvg",    extract: (p)=>clampBlockTimeForChart(p.avg) },
     { key: "tps",    label: "TPS",                  axis: "yTPS",    extract: (p)=>p.tps },
     { key: "gas",    label: "Gas Price (Gwei)",     axis: "yGas",    extract: (p)=>p.gas },
-    { key: "pending",label: "Pending Tx",           axis: "yPend",   extract: (p)=>p.pending },
+    { key: "pending",label: "Pending + Queued Tx",  axis: "yPend",   extract: (p)=>p.pending },
     { key: "mined",  label: "Total Supply (NOVA)",  axis: "yMined",  extract: supplyFromPoint },
     { key: "hash",   label: "Network Hashrate (GH/s)", axis: "yHash", extract: (p)=>p.hashrateGHs },
     { key: "diff",   label: "Difficulty (G)",       axis: "yDiff",   extract: (p)=>p.difficultyG },
@@ -383,7 +452,7 @@
         tension: 0.25,
         pointRadius: 0,
         borderWidth: 2,
-        spanGaps: true,
+        spanGaps: m.key !== "avg",
         borderColor: colors[m.key]
       });
     }
@@ -412,6 +481,9 @@
     const res = await fetch(STATS_URL, { cache: "no-store" });
     if (!res.ok) throw new Error("Failed to read stats.json (HTTP " + res.status + ")");
     const s = await res.json();
+    if (MOCK_HALT) {
+      s.avgBlockTimeSec = MAX_BLOCK_TIME_SEC + 1;
+    }
 
     const full = s.clientVersion || "";
     $("clientVersion").textContent   = shortClientVersion(full);
@@ -420,9 +492,24 @@
     const totalSupply = supplyWithBaseline(s.minedCoins, s.updatedAt);
     $("minedCoins").textContent      = fmtNum(totalSupply, 4);
     $("gasPriceGwei").textContent    = fmtNum(s.gasPriceGwei, 2);
-    $("avgBlockTimeSec").textContent = fmtNum(s.avgBlockTimeSec, 2);
+    const bt = blockTimeState(s.avgBlockTimeSec);
+    $("avgBlockTimeSec").textContent = bt.halted ? "— (network halted)" : fmtNum(bt.value, 2);
+    const avgNote = $("avgBlockTimeNote");
+    if (avgNote) {
+      avgNote.textContent = bt.halted
+        ? HALT_NOTE
+        : `Average of last 50 blocks • ${HALT_NOTE}`;
+      avgNote.title = HALT_NOTE;
+    }
     $("tps").textContent             = fmtNum(s.tps, 4);
-    $("pendingTx").textContent       = (s.pendingTx === null ? "null (txpool off)" : (s.pendingTx ?? "-"));
+    $("pendingTx").textContent       = formatPendingTx(s.pendingTx);
+    const pendingNote = $("pendingTxNote");
+    if (pendingNote) {
+      const pendingDisabled = s.pendingTx === null || s.pendingTx === undefined;
+      pendingNote.textContent = pendingDisabled
+        ? "Disabled (txpool API not enabled on node)."
+        : "txpool_status pending + queued (internal RPC)";
+    }
     $("chainDataGB").textContent     = fmtNum(s.chainDataGB, 2);
     $("networkHashrateGHs").textContent = s.networkHashrateHuman || fmtNum(s.networkHashrateGHs, 2);
     $("avgDifficulty").textContent   = (s.avgDifficultyG !== null && s.avgDifficultyG !== undefined)
@@ -438,7 +525,7 @@
     setHealth(s.updatedAt);
     setHalving(s);
     setSupplyNote();
-    setEthashStats(s.latestBlock);
+    setEthashStats(s.latestBlock, bt);
 
     return s;
   }
