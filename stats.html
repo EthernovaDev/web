@@ -56,7 +56,7 @@
     <div class="card"><div class="label">Client Version</div><div class="value" id="clientVersion">-</div><div class="tiny" id="clientVersionFull">Full: -</div></div>
     <div class="card"><div class="label">Latest Block</div><div class="value" id="latestBlock">—</div><div class="tiny">Source: eth_blockNumber</div></div>
     <div class="card"><div class="label">Total Supply (NOVA)</div><div class="value" id="minedCoins">-</div><div class="tiny" id="supplyNote">Supply includes migration baseline.</div></div>
-    <div class="card"><div class="label">Ethash Epoch</div><div class="value" id="ethashEpoch">-</div><div class="tiny" id="dagSize">Est. DAG size: -</div></div>
+    <div class="card"><div class="label">Ethash Epoch</div><div class="value" id="ethashEpoch">-</div><div class="tiny" id="dagSize">Est. DAG size: -</div><div class="tiny" id="nextEpochEta">Next epoch in: -</div><div class="tiny" id="nextEpochBlocks">Blocks remaining: -</div></div>
     <div class="card"><div class="label">Gas Price (Gwei)</div><div class="value" id="gasPriceGwei">—</div><div class="tiny">Source: eth_gasPrice</div></div>
     <div class="card"><div class="label">Avg Block Time (sec)</div><div class="value" id="avgBlockTimeSec">—</div><div class="tiny" id="avgBlockTimeNote">Average of last 50 blocks • During network halts/fork incidents, block-time is shown as halted and chart points are omitted/capped.</div></div>
     <div class="card"><div class="label">TPS</div><div class="value" id="tps">—</div><div class="tiny">Approx. last 50 blocks</div></div>
@@ -202,14 +202,33 @@
     return bytes / (1024 * 1024 * 1024);
   }
 
-  function setEthashStats(latestBlock){
+  function formatDurationShort(seconds){
+    const total = Math.round(Number(seconds));
+    if (!Number.isFinite(total) || total <= 0) return "-";
+    const days = Math.floor(total / 86400);
+    const hours = Math.floor((total % 86400) / 3600);
+    const mins = Math.floor((total % 3600) / 60);
+    const secs = total % 60;
+    const parts = [];
+    if (days) parts.push(`${days}d`);
+    if (hours || (days && mins)) parts.push(`${hours}h`);
+    if (mins || (!days && !hours)) parts.push(`${mins}m`);
+    if (!days && !hours && mins < 1) parts.push(`${secs}s`);
+    return parts.slice(0, 2).join(" ");
+  }
+
+  function setEthashStats(latestBlock, btState){
     const height = Number(latestBlock);
     const epochEl = $("ethashEpoch");
     const dagEl = $("dagSize");
-    if (!epochEl || !dagEl) return;
+    const etaEl = $("nextEpochEta");
+    const blocksEl = $("nextEpochBlocks");
+    if (!epochEl || !dagEl || !etaEl || !blocksEl) return;
     if (!Number.isFinite(height)) {
       epochEl.textContent = "-";
       dagEl.textContent = "Est. DAG size: -";
+      etaEl.textContent = "Next epoch in: -";
+      blocksEl.textContent = "Blocks remaining: -";
       return;
     }
     const epoch = Math.floor(height / ETHASH_EPOCH_LENGTH);
@@ -218,6 +237,24 @@
     dagEl.textContent = Number.isFinite(dagGiB)
       ? `Est. DAG size: ${fmtNum(dagGiB, 2)} GB`
       : "Est. DAG size: -";
+
+    const nextStart = (epoch + 1) * ETHASH_EPOCH_LENGTH;
+    const remaining = Math.max(0, nextStart - height);
+    blocksEl.textContent = `Blocks remaining: ${remaining.toLocaleString()}`;
+
+    if (remaining <= 0) {
+      etaEl.textContent = "Next epoch: imminent";
+      return;
+    }
+
+    const avgSec = btState && Number.isFinite(btState.value) ? btState.value : null;
+    if (!avgSec || (btState && btState.halted)) {
+      etaEl.textContent = "ETA: —";
+      return;
+    }
+
+    const etaSeconds = remaining * avgSec;
+    etaEl.textContent = `Next epoch in: ${formatDurationShort(etaSeconds)}`;
   }
 
   function shortClientVersion(s){
@@ -488,7 +525,7 @@
     setHealth(s.updatedAt);
     setHalving(s);
     setSupplyNote();
-    setEthashStats(s.latestBlock);
+    setEthashStats(s.latestBlock, bt);
 
     return s;
   }
