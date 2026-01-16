@@ -80,6 +80,7 @@
         <div>
           <div class="label">Chart</div>
           <div class="tiny">Pick one or show all lines. Range controls which history file is loaded.</div>
+          <div class="tiny" id="dagChartNote">DAG is epoch-derived (30,000 blocks/epoch).</div>
         </div>
         <div class="controls">
           <select id="range" class="btn" title="Range">
@@ -202,6 +203,52 @@
     return bytes / (1024 * 1024 * 1024);
   }
 
+  function heightFromMined(minedValue){
+    const total = Number(minedValue);
+    if (!Number.isFinite(total) || total < 0) return null;
+    let remaining = total;
+    let height = 0;
+    for (let i = 0; i < REWARD_SCHEDULE.length; i++) {
+      const seg = REWARD_SCHEDULE[i];
+      const start = seg.start;
+      const reward = seg.reward;
+      const startEff = Math.max(1, start);
+      const nextStart = i + 1 < REWARD_SCHEDULE.length ? REWARD_SCHEDULE[i + 1].start : Number.POSITIVE_INFINITY;
+      const end = Number.isFinite(nextStart) ? nextStart - 1 : Number.POSITIVE_INFINITY;
+      const segmentLen = Number.isFinite(end) ? Math.max(0, end - startEff + 1) : Number.POSITIVE_INFINITY;
+      const segmentMined = segmentLen * reward;
+      if (!Number.isFinite(segmentMined) || remaining <= segmentMined + 1e-9) {
+        if (reward <= 0) return null;
+        height = startEff - 1 + remaining / reward;
+        return Math.max(0, Math.floor(height));
+      }
+      remaining -= segmentMined;
+      height = end;
+    }
+    return Math.max(0, Math.floor(height));
+  }
+
+  function blockHeightFromPoint(p){
+    if (!p || typeof p !== "object") return null;
+    const directFields = ["height", "block", "blockHeight", "latestBlock", "h"];
+    for (const key of directFields) {
+      if (p[key] === null || p[key] === undefined) continue;
+      const n = Number(p[key]);
+      if (Number.isFinite(n) && n >= 0) return Math.floor(n);
+    }
+    if (p.mined !== null && p.mined !== undefined) {
+      return heightFromMined(p.mined);
+    }
+    return null;
+  }
+
+  function dagFromPoint(p){
+    const height = blockHeightFromPoint(p);
+    if (!Number.isFinite(height)) return null;
+    const epoch = Math.floor(height / ETHASH_EPOCH_LENGTH);
+    return estimateDagGiB(epoch);
+  }
+
   function formatDurationShort(seconds){
     const total = Math.round(Number(seconds));
     if (!Number.isFinite(total) || total <= 0) return "-";
@@ -303,6 +350,13 @@
     if (h < 8409600) return 1.25;
     return 1.0;
   }
+  const REWARD_SCHEDULE = [
+    { start: 0, reward: 10.0 },
+    { start: 2102400, reward: 5.0 },
+    { start: 4204800, reward: 2.5 },
+    { start: 6307200, reward: 1.25 },
+    { start: 8409600, reward: 1.0 }
+  ];
   function nextHalvingBlock(h){
     for (const b of HALVING_BLOCKS) if (b > h) return b;
     return null;
@@ -362,11 +416,12 @@
     { key: "mined",  label: "Total Supply (NOVA)",  axis: "yMined",  extract: supplyFromPoint },
     { key: "hash",   label: "Network Hashrate (GH/s)", axis: "yHash", extract: (p)=>p.hashrateGHs },
     { key: "diff",   label: "Difficulty (G)",       axis: "yDiff",   extract: (p)=>p.difficultyG },
+    { key: "dag",    label: "DAG (GB)",             axis: "yGB",     extract: (p)=>dagFromPoint(p) },
     { key: "chain",  label: "Chain Data (GB)",      axis: "yGB",     extract: (p)=>p.chainDataGB }
   ];
 
   function defaultSelection(){
-    return { avg:true, tps:true, gas:false, pending:false, mined:false, chain:true, hash:true, diff:false };
+    return { avg:true, tps:true, gas:false, pending:false, mined:false, chain:true, dag:true, hash:true, diff:false };
   }
 
   function makeAxes(selected){
@@ -390,7 +445,7 @@
     if (selected.tps)   addAxis("yTPS",   "tps", "right", false);
     if (selected.hash)  addAxis("yHash",  "GH/s","right", true);
     if (selected.diff)  addAxis("yDiff",  "Diff (G)", "right", true);
-    if (selected.chain) addAxis("yGB",    "GB",  "right", true);
+    if (selected.chain || selected.dag) addAxis("yGB", "GB", "right", true);
     if (selected.gas)   addAxis("yGas",   "gwei","right", true);
     if (selected.pending) addAxis("yPend","tx",  "right", true);
     if (selected.mined) addAxis("yMined", "NOVA","right", true);
@@ -434,7 +489,8 @@
       gas: "rgba(153, 102, 255, 1)",
       pending: "rgba(255, 99, 132, 1)",
       mined: "rgba(75, 192, 192, 1)",
-      chain: "rgba(255, 159, 64, 1)"
+      chain: "rgba(255, 159, 64, 1)",
+      dag: "rgba(153, 255, 102, 1)"
     };
 
     for (const m of METRICS) {
