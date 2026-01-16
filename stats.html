@@ -60,7 +60,7 @@
     <div class="card"><div class="label">Gas Price (Gwei)</div><div class="value" id="gasPriceGwei">—</div><div class="tiny">Source: eth_gasPrice</div></div>
     <div class="card"><div class="label">Avg Block Time (sec)</div><div class="value" id="avgBlockTimeSec">—</div><div class="tiny" id="avgBlockTimeNote">Average of last 50 blocks</div></div>
     <div class="card"><div class="label">TPS</div><div class="value" id="tps">—</div><div class="tiny">Approx. last 50 blocks</div></div>
-    <div class="card"><div class="label">Pending Tx</div><div class="value" id="pendingTx">-</div><div class="tiny" id="pendingTxNote">txpool_status pending + queued (internal RPC)</div></div>
+    <div class="card"><div class="label">Pending + Queued Tx</div><div class="value" id="pendingTx">-</div><div class="tiny" id="pendingTxNote">txpool_status pending + queued (internal RPC)</div></div>
     <div class="card"><div class="label">Chain Data (GB)</div><div class="value" id="chainDataGB">-</div><div class="tiny">Measured on VPS disk</div></div>
     <div class="card"><div class="label">Network Hashrate (GH/s)</div><div class="value" id="networkHashrateGHs">-</div><div class="tiny">Estimated from difficulty / block time</div></div>
     <div class="card"><div class="label">Avg Difficulty (G)</div><div class="value" id="avgDifficulty">-</div><div class="tiny" id="avgDifficultyRaw">Raw: -</div></div>
@@ -318,7 +318,7 @@
     { key: "avg",    label: "Avg Block Time (sec)", axis: "yAvg",    extract: (p)=>clampBlockTimeForChart(p.avg) },
     { key: "tps",    label: "TPS",                  axis: "yTPS",    extract: (p)=>p.tps },
     { key: "gas",    label: "Gas Price (Gwei)",     axis: "yGas",    extract: (p)=>p.gas },
-    { key: "pending",label: "Pending Tx",           axis: "yPend",   extract: (p)=>p.pending },
+    { key: "pending",label: "Pending + Queued Tx",  axis: "yPend",   extract: (p)=>p.pending },
     { key: "mined",  label: "Total Supply (NOVA)",  axis: "yMined",  extract: supplyFromPoint },
     { key: "hash",   label: "Network Hashrate (GH/s)", axis: "yHash", extract: (p)=>p.hashrateGHs },
     { key: "diff",   label: "Difficulty (G)",       axis: "yDiff",   extract: (p)=>p.difficultyG },
