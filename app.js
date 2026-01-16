@@ -124,7 +124,7 @@ copyButtons.forEach((button) => {
 const metaMaskConfig = [
   "Network Name: Ethernova",
   "RPC: https://rpc.ethnova.net",
-  "ChainId: 77777",
+  "ChainId: 121525",
   "Symbol: NOVA",
   "Explorer: https://explorer.ethnova.net",
 ].join("\n");
