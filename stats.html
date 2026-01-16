@@ -58,7 +58,7 @@
     <div class="card"><div class="label">Total Supply (NOVA)</div><div class="value" id="minedCoins">-</div><div class="tiny" id="supplyNote">Supply includes migration baseline.</div></div>
     <div class="card"><div class="label">Ethash Epoch</div><div class="value" id="ethashEpoch">-</div><div class="tiny" id="dagSize">Est. DAG size: -</div></div>
     <div class="card"><div class="label">Gas Price (Gwei)</div><div class="value" id="gasPriceGwei">—</div><div class="tiny">Source: eth_gasPrice</div></div>
-    <div class="card"><div class="label">Avg Block Time (sec)</div><div class="value" id="avgBlockTimeSec">—</div><div class="tiny" id="avgBlockTimeNote">Average of last 50 blocks</div></div>
+    <div class="card"><div class="label">Avg Block Time (sec)</div><div class="value" id="avgBlockTimeSec">—</div><div class="tiny" id="avgBlockTimeNote">Average of last 50 blocks • During network halts/fork incidents, block-time is shown as halted and chart points are omitted/capped.</div></div>
     <div class="card"><div class="label">TPS</div><div class="value" id="tps">—</div><div class="tiny">Approx. last 50 blocks</div></div>
     <div class="card"><div class="label">Pending + Queued Tx</div><div class="value" id="pendingTx">-</div><div class="tiny" id="pendingTxNote">txpool_status pending + queued (internal RPC)</div></div>
     <div class="card"><div class="label">Chain Data (GB)</div><div class="value" id="chainDataGB">-</div><div class="tiny">Measured on VPS disk</div></div>
@@ -123,6 +123,8 @@
   const MAX_BLOCK_TIME_SEC = Number(CONFIG.MAX_BLOCK_TIME_SEC) || 600;
 
   const ETHASH_EPOCH_LENGTH = 30000;
+  const HALT_NOTE = "During network halts/fork incidents, block-time is shown as halted and chart points are omitted/capped.";
+  const MOCK_HALT = new URLSearchParams(window.location.search).get("mockHalt") === "1";
   const DAG_BYTES_INIT = 1073741824;
   const DAG_BYTES_GROWTH = 8388608;
 
@@ -149,15 +151,16 @@
 
   function blockTimeState(value){
     const n = parsePositiveNumber(value);
-    if (n === null) return { value: null, halted: false };
-    if (n > MAX_BLOCK_TIME_SEC) return { value: null, halted: true };
-    return { value: n, halted: false };
+    if (n === null) return { value: null, halted: true, reason: "data unavailable" };
+    if (n > MAX_BLOCK_TIME_SEC) return { value: null, halted: true, reason: "network halted" };
+    return { value: n, halted: false, reason: "" };
   }
 
   function clampBlockTimeForChart(value){
     const n = parsePositiveNumber(value);
     if (n === null) return null;
-    return Math.min(n, MAX_BLOCK_TIME_SEC);
+    if (n > MAX_BLOCK_TIME_SEC) return null;
+    return n;
   }
 
   function formatPendingTx(value){
@@ -296,7 +299,7 @@
     const remaining = Math.max(0, nextB - h);
 
     if (!Number.isFinite(abt)) {
-      const reason = bt.halted ? "network halted" : "avgBlockTimeSec missing";
+      const reason = bt.halted ? (bt.reason || "network halted") : "avgBlockTimeSec missing";
       $("halvingMain").textContent = `Next halving at block ${nextB.toLocaleString()}`;
       $("halvingSub").textContent = `Reward: ${currentReward} → ${nextReward} NOVA • Remaining blocks: ${remaining.toLocaleString()} • ETA unavailable (${reason})`;
       return;
@@ -412,7 +415,7 @@
         tension: 0.25,
         pointRadius: 0,
         borderWidth: 2,
-        spanGaps: true,
+        spanGaps: m.key !== "avg",
         borderColor: colors[m.key]
       });
     }
@@ -441,6 +444,9 @@
     const res = await fetch(STATS_URL, { cache: "no-store" });
     if (!res.ok) throw new Error("Failed to read stats.json (HTTP " + res.status + ")");
     const s = await res.json();
+    if (MOCK_HALT) {
+      s.avgBlockTimeSec = MAX_BLOCK_TIME_SEC + 1;
+    }
 
     const full = s.clientVersion || "";
     $("clientVersion").textContent   = shortClientVersion(full);
@@ -454,8 +460,9 @@
     const avgNote = $("avgBlockTimeNote");
     if (avgNote) {
       avgNote.textContent = bt.halted
-        ? "Network halted during fork incident; block time capped."
-        : "Average of last 50 blocks";
+        ? HALT_NOTE
+        : `Average of last 50 blocks • ${HALT_NOTE}`;
+      avgNote.title = HALT_NOTE;
     }
     $("tps").textContent             = fmtNum(s.tps, 4);
     $("pendingTx").textContent       = formatPendingTx(s.pendingTx);
