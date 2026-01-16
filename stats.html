@@ -55,7 +55,8 @@
   <div class="grid">
     <div class="card"><div class="label">Client Version</div><div class="value" id="clientVersion">-</div><div class="tiny" id="clientVersionFull">Full: -</div></div>
     <div class="card"><div class="label">Latest Block</div><div class="value" id="latestBlock">—</div><div class="tiny">Source: eth_blockNumber</div></div>
-    <div class="card"><div class="label">Coins Mined</div><div class="value" id="minedCoins">—</div><div class="tiny">Block rewards (1..latest)</div></div>
+    <div class="card"><div class="label">Total Supply (NOVA)</div><div class="value" id="minedCoins">-</div><div class="tiny" id="supplyNote">Supply includes migration baseline.</div></div>
+    <div class="card"><div class="label">Ethash Epoch</div><div class="value" id="ethashEpoch">-</div><div class="tiny" id="dagSize">Est. DAG size: -</div></div>
     <div class="card"><div class="label">Gas Price (Gwei)</div><div class="value" id="gasPriceGwei">—</div><div class="tiny">Source: eth_gasPrice</div></div>
     <div class="card"><div class="label">Avg Block Time (sec)</div><div class="value" id="avgBlockTimeSec">—</div><div class="tiny">Average of last 50 blocks</div></div>
     <div class="card"><div class="label">TPS</div><div class="value" id="tps">—</div><div class="tiny">Approx. last 50 blocks</div></div>
@@ -107,11 +108,22 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="stats-config.js"></script>
 <script>
   const STATS_URL = "https://api.ethnova.net/stats.json";
   const HIST_URL = (range) => `https://api.ethnova.net/history-${range}.json`;
 
   const $ = (id) => document.getElementById(id);
+
+  const CONFIG = window.ETHNOVA_STATS_CONFIG || {};
+  const MIGRATION_START_BLOCK = Number(CONFIG.MIGRATION_START_BLOCK);
+  const MIGRATION_BASELINE_SUPPLY = Number(CONFIG.MIGRATION_BASELINE_SUPPLY);
+  const MIGRATION_START_ISO = typeof CONFIG.MIGRATION_START_ISO === "string" ? CONFIG.MIGRATION_START_ISO : "";
+  const MIGRATION_START_MS = MIGRATION_START_ISO ? Date.parse(MIGRATION_START_ISO) : Number.NaN;
+
+  const ETHASH_EPOCH_LENGTH = 30000;
+  const DAG_BYTES_INIT = 1073741824;
+  const DAG_BYTES_GROWTH = 8388608;
 
   const storage = {
     get(k, fallback){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback; } catch { return fallback; } },
@@ -126,6 +138,56 @@
       maximumFractionDigits: digits,
       minimumFractionDigits: digits === 4 ? 4 : 0
     });
+  }
+
+  function shouldApplyMigration(iso){
+    if (!Number.isFinite(MIGRATION_BASELINE_SUPPLY) || MIGRATION_BASELINE_SUPPLY <= 0) return false;
+    if (!Number.isFinite(MIGRATION_START_MS)) return false;
+    if (!iso) return false;
+    const t = Date.parse(iso);
+    if (Number.isNaN(t)) return false;
+    return t >= MIGRATION_START_MS;
+  }
+
+  function supplyWithBaseline(mined, iso){
+    const n = Number(mined);
+    if (!Number.isFinite(n)) return null;
+    if (!shouldApplyMigration(iso)) return n;
+    return n + MIGRATION_BASELINE_SUPPLY;
+  }
+
+  function setSupplyNote(){
+    const note = $("supplyNote");
+    if (!note) return;
+    if (Number.isFinite(MIGRATION_START_BLOCK)) {
+      note.textContent = `Supply includes migration baseline from legacy chain at block ${MIGRATION_START_BLOCK.toLocaleString()}.`;
+    } else {
+      note.textContent = "Block rewards (1..latest)";
+    }
+  }
+
+  function estimateDagGiB(epoch){
+    if (!Number.isFinite(epoch) || epoch < 0) return null;
+    const bytes = DAG_BYTES_INIT + DAG_BYTES_GROWTH * epoch;
+    return bytes / (1024 * 1024 * 1024);
+  }
+
+  function setEthashStats(latestBlock){
+    const height = Number(latestBlock);
+    const epochEl = $("ethashEpoch");
+    const dagEl = $("dagSize");
+    if (!epochEl || !dagEl) return;
+    if (!Number.isFinite(height)) {
+      epochEl.textContent = "-";
+      dagEl.textContent = "Est. DAG size: -";
+      return;
+    }
+    const epoch = Math.floor(height / ETHASH_EPOCH_LENGTH);
+    epochEl.textContent = epoch.toLocaleString();
+    const dagGiB = estimateDagGiB(epoch);
+    dagEl.textContent = Number.isFinite(dagGiB)
+      ? `Est. DAG size: ${fmtNum(dagGiB, 2)} GB`
+      : "Est. DAG size: -";
   }
 
   function shortClientVersion(s){
@@ -220,13 +282,15 @@
       `Reward: ${currentReward} → ${nextReward} NOVA • Remaining: ${remaining.toLocaleString()} blocks (~${days.toFixed(1)} days)`;
   }
 
+  const supplyFromPoint = (p) => supplyWithBaseline(p.mined, p.t);
+
   // Chart datasets (toggleable)
   const METRICS = [
     { key: "avg",    label: "Avg Block Time (sec)", axis: "yAvg",    extract: (p)=>p.avg },
     { key: "tps",    label: "TPS",                  axis: "yTPS",    extract: (p)=>p.tps },
     { key: "gas",    label: "Gas Price (Gwei)",     axis: "yGas",    extract: (p)=>p.gas },
     { key: "pending",label: "Pending Tx",           axis: "yPend",   extract: (p)=>p.pending },
-    { key: "mined",  label: "Coins Mined",          axis: "yMined",  extract: (p)=>p.mined },
+    { key: "mined",  label: "Total Supply (NOVA)",  axis: "yMined",  extract: supplyFromPoint },
     { key: "hash",   label: "Network Hashrate (GH/s)", axis: "yHash", extract: (p)=>p.hashrateGHs },
     { key: "diff",   label: "Difficulty (G)",       axis: "yDiff",   extract: (p)=>p.difficultyG },
     { key: "chain",  label: "Chain Data (GB)",      axis: "yGB",     extract: (p)=>p.chainDataGB }
@@ -352,8 +416,9 @@
     const full = s.clientVersion || "";
     $("clientVersion").textContent   = shortClientVersion(full);
     $("clientVersionFull").textContent = full ? `Full: ${full}` : "Full: -";
-    $("latestBlock").textContent     = (s.latestBlock ?? "—");
-    $("minedCoins").textContent      = fmtNum(s.minedCoins, 4);
+    $("latestBlock").textContent     = (s.latestBlock ?? "-");
+    const totalSupply = supplyWithBaseline(s.minedCoins, s.updatedAt);
+    $("minedCoins").textContent      = fmtNum(totalSupply, 4);
     $("gasPriceGwei").textContent    = fmtNum(s.gasPriceGwei, 2);
     $("avgBlockTimeSec").textContent = fmtNum(s.avgBlockTimeSec, 2);
     $("tps").textContent             = fmtNum(s.tps, 4);
@@ -372,6 +437,8 @@
 
     setHealth(s.updatedAt);
     setHalving(s);
+    setSupplyNote();
+    setEthashStats(s.latestBlock);
 
     return s;
   }
