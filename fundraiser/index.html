@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>NonKYC Listing Fee Fundraiser | Ethernova</title>
-  <meta name="description" content="Fundraiser to cover the NonKYC listing integration fee for Ethernova. Donations are USDT on TRON (TRC20) only.">
+  <title>Fundraiser Closed | Ethernova</title>
+  <meta name="description" content="Fundraiser closed. Ethernova is now self-funded through Orion Mining Pool with a 2% mining fee. Refund transaction included.">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -22,105 +22,73 @@
   <main class="container">
     <section class="hero">
       <div class="hero-text">
-        <p class="eyebrow">Transparent community funding</p>
-        <h1>NonKYC Listing Fee Fundraiser</h1>
-        <p class="subtitle">Raising 3,900 USDT (TRC20) to cover the NonKYC integration fee.</p>
+        <p class="eyebrow">Fundraiser closed</p>
+        <h1>Fundraiser Closed — Now Self-Funded</h1>
+        <p class="subtitle">We ended the NonKYC listing fee fundraiser. Only one donation was received and it was refunded in full to the original wallet. No more fundraisers are planned.</p>
+
+        <div class="card closure-banner">
+          <div class="closure-content">
+            <h2>Self-funded via Orion Mining Pool</h2>
+            <p>Ongoing development is now funded by the Orion Mining Pool with a 2% mining fee.</p>
+            <div class="button-row">
+              <a class="btn primary" href="https://orionpool.net/" target="_blank" rel="noopener noreferrer">Visit Orion Pool</a>
+            </div>
+          </div>
+          <div class="closure-meta">
+            <div class="label">Refund transaction (TRON)</div>
+            <a class="tx-link" href="https://tronscan.org/#/transaction/f37ee81d8276b0713057c4535b70d37cca732cac696db9cc39b14f1fb520ae4b" target="_blank" rel="noopener noreferrer">f37ee81d8276b0713057c4535b70d37cca732cac696db9cc39b14f1fb520ae4b</a>
+            <div class="tiny">Full refund sent back to the original donor wallet.</div>
+          </div>
+        </div>
 
         <div class="card progress-card">
           <div class="progress-header">
             <div>
-              <div class="label">Progress</div>
-              <div class="progress-percent" id="percentValue">0%</div>
+              <div class="label">Status</div>
+              <div class="progress-percent" id="percentValue">Closed</div>
             </div>
             <div class="deadline">
-              <div class="label">Deadline</div>
-              <div class="deadline-date" id="deadlineDate">Loading...</div>
+              <div class="label">Fundraiser</div>
+              <div class="deadline-date" id="deadlineDate">Closed</div>
               <div class="tiny">Days remaining: <span id="daysRemaining">0</span></div>
             </div>
           </div>
           <div class="progress-bar" aria-hidden="true">
-            <div class="progress-fill" id="progressFill"></div>
+            <div class="progress-fill" id="progressFill" style="width:0%"></div>
           </div>
           <div class="stats-grid">
             <div class="stat">
-              <div class="label">Goal</div>
-              <div class="value" id="goalValue">0.00 USDT</div>
+              <div class="label">Goal (archived)</div>
+              <div class="value" id="goalValue">3,900 USDT</div>
             </div>
             <div class="stat">
               <div class="label">Raised</div>
-              <div class="value" id="raisedValue">0.00 USDT</div>
+              <div class="value" id="raisedValue">1 donation</div>
             </div>
             <div class="stat">
-              <div class="label">Remaining</div>
-              <div class="value" id="remainingValue">0.00 USDT</div>
+              <div class="label">Refunded</div>
+              <div class="value" id="remainingValue">100% refunded</div>
             </div>
           </div>
-          <div class="deadline-warning" id="deadlineWarning" hidden>
-            Fundraiser deadline reached. If the goal is not met, refunds will be handled manually.
+          <div class="deadline-warning" id="deadlineWarning">
+            Fundraiser closed. Refund completed on-chain.
           </div>
-        </div>
-
-        <div class="info-box">
-          <strong>Additional requirement (info only):</strong>
-          Locked liquidity is $400 for EACH market (example: PAIR/USDT = $400 Coins/Tokens + $400 USDT).
         </div>
       </div>
 
       <aside class="card donation-card">
-        <div class="alert">USDT TRC20 (TRON) ONLY &mdash; DO NOT send ERC20/BEP20.</div>
-        <div class="label">Send USDT (TRC20) to:</div>
+        <div class="alert">Fundraiser closed — do not send funds.</div>
+        <div class="label">Archived donation address (TRC20):</div>
         <div class="address-row">
           <code id="addressText">TVYT4XtYtnBEg5VnKNUnx1n8oUeZ8mq2Lg</code>
-          <button class="btn" id="copyButton" type="button">Copy</button>
         </div>
-        <div class="qr-wrap">
-          <canvas id="qrCanvas" aria-label="Donation address QR code"></canvas>
-        </div>
-          <div class="tiny" id="qrStatus" hidden>QR temporarily unavailable - copy address manually.</div>
-        <div class="tiny">Keep a small amount of TRX in your wallet for network fees.</div>
+        <div class="tiny">Address kept for transparency and historical reference only.</div>
         <div class="button-row">
-          <a class="btn primary" id="btnVerifyWallet" href="https://tronscan.org/#/address/TVYT4XtYtnBEg5VnKNUnx1n8oUeZ8mq2Lg" target="_blank" rel="noopener noreferrer">Verify wallet on Tronscan</a>
-          <a class="btn" id="btnLatestTx" href="#" target="_blank" rel="noopener noreferrer" aria-disabled="true">Latest tx</a>
+          <a class="btn primary" href="https://tronscan.org/#/transaction/f37ee81d8276b0713057c4535b70d37cca732cac696db9cc39b14f1fb520ae4b" target="_blank" rel="noopener noreferrer">View refund tx</a>
+          <a class="btn" href="https://tronscan.org/#/address/TVYT4XtYtnBEg5VnKNUnx1n8oUeZ8mq2Lg" target="_blank" rel="noopener noreferrer">View archived wallet</a>
         </div>
-        <div class="tiny" id="latestTxCaption">Latest: none</div>
-        <div class="mini-feed">
-          <div class="mini-feed-header">
-            <div class="feed-title">Live Donations</div>
-            <div class="tiny">Updates every <span id="feedRefreshSeconds">0</span>s</div>
-          </div>
-          <div id="feedList" class="feed-list"></div>
-          <div class="tiny" id="feedEmpty">No donations yet. Be the first to support the listing fee!</div>
-        </div>
-          <div class="diagnostics">
-            <button class="btn" id="diagnosticsToggle" type="button" aria-expanded="false">Diagnostics</button>
-            <div id="heartbeat" class="heartbeat">Heartbeat: (starting...)</div>
-            <div class="diagnostics-panel" id="diagnosticsPanel" hidden>
-            <div class="diag-grid">
-              <div class="diag-row"><span class="diag-label">Source</span><span id="diagSource">Proxy</span></div>
-              <div class="diag-row"><span class="diag-label">Base</span><span id="diagBase">https://ethnova-tronscan-proxy.jemc787.workers.dev</span></div>
-<div class="diag-row"><span class="diag-label">Build</span><span id="diagBuild">20260102-clean-1</span></div>
-              <div class="diag-row"><span class="diag-label">Query</span><span id="diagQuery">pending</span></div>
-              <div class="diag-row"><span class="diag-label">Confirm</span><span id="diagConfirm">0</span></div>
-              <div class="diag-row"><span class="diag-label">Last fetch</span><span id="diagLastFetch">pending</span></div>
-              <div class="diag-row"><span class="diag-label">HTTP status</span><span id="diagHttpStatus">pending</span></div>
-              <div class="diag-row"><span class="diag-label">Records</span><span id="diagRecords">0</span></div>
-              <div class="diag-row"><span class="diag-label">Incoming matched</span><span id="diagIncoming">0</span></div>
-              <div class="diag-row"><span class="diag-label">Latest incoming tx</span><a id="diagLatestTx" href="#" target="_blank" rel="noopener noreferrer">none</a></div>
-              <div class="diag-row"><span class="diag-label">Known tx</span><span id="diagKnownTx">pending</span></div>
-              <div class="diag-row"><span class="diag-label">Error</span><span id="diagError">none</span></div>
-            </div>
-            <div class="diag-actions">
-              <button class="btn" id="copyDiagnostics" type="button">Copy diagnostics</button>
-              <a class="btn" id="debugLink" href="/fundraiser/debug.html" target="_blank" rel="noopener noreferrer" hidden>Open debug page</a>
-            </div>
-            <pre class="diag-attempts" id="diagAttempts"></pre>
-          </div>
-        </div>
-        <div class="cors-banner" id="proxyBanner" hidden>
-          Proxy not configured. Live API may fail due to TronScan API key/rate limits.
-        </div>
-        <div class="cors-banner" id="corsBanner" hidden>
-          Live data temporarily unavailable (CORS). Please verify on Tronscan via the wallet link.
+        <div class="info-box">
+          We will not run additional fundraisers. The project is now self-funded via Orion Mining Pool with a 2% mining fee.
         </div>
       </aside>
     </section>
@@ -128,51 +96,49 @@
     <section class="card transparency">
       <h2>Transparency</h2>
       <ul>
-        <li>Purpose: NonKYC Integration Fee (3,900 USDT).</li>
-        <li>Liquidity requirement: $400 per market (example: PAIR/USDT = $400 Coins/Tokens + $400 USDT).</li>
-        <li>Refunds: If the goal is not reached by the deadline, refunds will be handled manually by the team.</li>
-        <li>All donations are publicly verifiable on-chain (Tronscan links).</li>
+        <li>Purpose (archived): NonKYC integration fee (3,900 USDT).</li>
+        <li>Fundraiser status: Closed.</li>
+        <li>Refund: Full refund sent back to the original donor wallet.</li>
+        <li>Refund tx: <a href="https://tronscan.org/#/transaction/f37ee81d8276b0713057c4535b70d37cca732cac696db9cc39b14f1fb520ae4b" target="_blank" rel="noopener noreferrer">f37ee81d8276b0713057c4535b70d37cca732cac696db9cc39b14f1fb520ae4b</a></li>
+        <li>Funding now: Self-funded via Orion Mining Pool (2% mining fee).</li>
       </ul>
     </section>
 
     <section class="card donations">
       <div class="row">
         <div>
-          <h2>Recent Donations</h2>
-          <div class="tiny">Last updated: <span id="lastUpdated">Loading...</span> (auto refresh every <span id="refreshSeconds">0</span>s)</div>
+          <h2>Donation History (Archived)</h2>
+          <div class="tiny">This fundraiser is closed. There are no active donation feeds.</div>
         </div>
-        <button class="btn" id="refreshButton" type="button">Refresh now</button>
       </div>
       <div class="table">
         <div class="table-header">
-          <span>Amount (USDT)</span>
-          <span>From</span>
-          <span>TIME</span>
+          <span>Item</span>
+          <span>Details</span>
+          <span>Time</span>
           <span>Transaction</span>
         </div>
-        <div id="donationsList" class="table-body"></div>
+        <div class="table-body">
+          <div class="table-row">
+            <span>Refund</span>
+            <span>Full refund to original donor wallet</span>
+            <span>On-chain</span>
+            <a href="https://tronscan.org/#/transaction/f37ee81d8276b0713057c4535b70d37cca732cac696db9cc39b14f1fb520ae4b" target="_blank" rel="noopener noreferrer">f37ee81d...ae4b</a>
+          </div>
+        </div>
       </div>
-      <div class="tiny" id="donationEmpty">No donations found yet.</div>
     </section>
   </main>
 
   <footer class="site-footer">
-  <div class="container footer">
+    <div class="container footer">
       <span>&copy; 2026 Ethernova. All rights reserved.</span>
-    <div class="footer-links">
-      <a href="/">Home</a>
-      <a href="/stats.html">Network Stats</a>
-      <a href="/fundraiser/">Fundraiser</a>
+      <div class="footer-links">
+        <a href="/">Home</a>
+        <a href="/stats.html">Network Stats</a>
+        <a href="/fundraiser/">Fundraiser</a>
+      </div>
     </div>
-  </div>
-</footer>
-
-  <script src="./app.js?v=20260102-nochicago-1" defer></script>
+  </footer>
 </body>
 </html>
-
-
-
-
-
-
