@@ -3,7 +3,9 @@
 // Auto-fetch latest release from GitHub
 (async () => {
   try {
-    const res = await fetch("https://api.github.com/repos/EthernovaDev/ethernova-coregeth/releases/latest");
+    const res = await fetch("https://api.github.com/repos/EthernovaDev/ethernova-coregeth/releases/latest", {
+      headers: { Accept: "application/vnd.github.html+json" },
+    });
     if (!res.ok) return;
     const data = await res.json();
     const tag = data.tag_name;
@@ -20,8 +22,8 @@
     });
 
     const upgradeBody = document.getElementById("upgrade-body");
-    if (upgradeBody && data.body) {
-      upgradeBody.textContent = data.body;
+    if (upgradeBody && data.body_html) {
+      upgradeBody.innerHTML = data.body_html;
     }
 
     const downloadLink = document.getElementById("upgrade-download");

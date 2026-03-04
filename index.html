@@ -166,7 +166,7 @@
           <p>Ethernova is CoreGeth-based, fully EVM-compatible, and mining friendly with excellent Windows support.</p>
         </div>
         <div class="glass-card">
-          <p>It is engineered for stable mining operations, rapid onboarding for developers, and a community-driven network secured by GPUs.</p>
+          <p>It is engineered for stable mining operations, rapid onboarding for developers, and a community-driven network secured by POW.</p>
         </div>
       </div>
     </section>
@@ -209,27 +209,13 @@
           <h2>Mining Pool</h2>
           <p>Connect your miner to the Orion Mining Pool with the details below.</p>
         </div>
-        <div class="grid-2">
-          <div class="glass-card stack">
+        <div class="glass-card stack">
+          <div class="grid-3">
             <div class="info-row">
               <span class="label">Pool Dashboard</span>
               <div class="value-group">
-                <code>https://orionpool.net/</code>
+                <code>orionpool.net</code>
                 <button class="copy-btn" type="button" data-copy="https://orionpool.net/" aria-label="Copy pool dashboard URL">Copy</button>
-              </div>
-            </div>
-            <div class="info-row">
-              <span class="label">Pool Stratum</span>
-              <div class="value-group">
-                <code>stratum+tcp://orionpool.net:3391</code>
-                <button class="copy-btn" type="button" data-copy="stratum+tcp://orionpool.net:3391" aria-label="Copy pool stratum endpoint">Copy</button>
-              </div>
-            </div>
-            <div class="info-row">
-              <span class="label">Solo Stratum</span>
-              <div class="value-group">
-                <code>stratum+tcp://orionpool.net:3392</code>
-                <button class="copy-btn" type="button" data-copy="stratum+tcp://orionpool.net:3392" aria-label="Copy solo stratum endpoint">Copy</button>
               </div>
             </div>
             <div class="info-row">
@@ -239,35 +225,28 @@
                 <button class="copy-btn" type="button" data-copy="2%" aria-label="Copy pool fee">Copy</button>
               </div>
             </div>
-          </div>
-          <div class="glass-card stack">
-            <div class="info-row">
-              <span class="label">Pool Command</span>
-              <div class="value-group">
-                <code>stratum+tcp://orionpool.net:3391 -u YOUR_WALLET.WORKER -p x</code>
-                <button class="copy-btn" type="button" data-copy="stratum+tcp://orionpool.net:3391 -u YOUR_WALLET.WORKER -p x" aria-label="Copy pool command">Copy</button>
-              </div>
-            </div>
-            <div class="info-row">
-              <span class="label">Solo Command</span>
-              <div class="value-group">
-                <code>stratum+tcp://orionpool.net:3392 -u YOUR_WALLET.WORKER -p x</code>
-                <button class="copy-btn" type="button" data-copy="stratum+tcp://orionpool.net:3392 -u YOUR_WALLET.WORKER -p x" aria-label="Copy solo command">Copy</button>
-              </div>
-            </div>
-            <div class="info-row">
-              <span class="label">Wallet Format</span>
-              <div class="value-group">
-                <code>YOUR_WALLET.WORKER</code>
-                <button class="copy-btn" type="button" data-copy="YOUR_WALLET.WORKER" aria-label="Copy wallet format">Copy</button>
-              </div>
-            </div>
             <div class="info-row">
               <span class="label">Password</span>
               <div class="value-group">
                 <code>x</code>
                 <button class="copy-btn" type="button" data-copy="x" aria-label="Copy password">Copy</button>
               </div>
+            </div>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="glass-card">
+            <h3>Pool Mining</h3>
+            <div class="cmd-block">
+              <pre><code>stratum+tcp://orionpool.net:3391 -u YOUR_WALLET.WORKER -p x</code></pre>
+              <button class="copy-btn" type="button" data-copy="stratum+tcp://orionpool.net:3391 -u YOUR_WALLET.WORKER -p x" aria-label="Copy pool command">Copy</button>
+            </div>
+          </div>
+          <div class="glass-card">
+            <h3>Solo Mining</h3>
+            <div class="cmd-block">
+              <pre><code>stratum+tcp://orionpool.net:3392 -u YOUR_WALLET.WORKER -p x</code></pre>
+              <button class="copy-btn" type="button" data-copy="stratum+tcp://orionpool.net:3392 -u YOUR_WALLET.WORKER -p x" aria-label="Copy solo command">Copy</button>
             </div>
           </div>
         </div>
@@ -416,7 +395,7 @@
         </div>
         <div class="glass-card" id="upgrade-notes">
           <h3>What's new in <span class="release-version">v1.3.0</span></h3>
-          <p id="upgrade-body">Loading release notes...</p>
+          <div id="upgrade-body">Loading release notes...</div>
         </div>
         <div class="cta-row">
           <a class="btn primary" id="upgrade-download" href="https://github.com/EthernovaDev/ethernova-coregeth/releases/latest" target="_blank" rel="noopener">Download from GitHub</a>

@@ -526,6 +526,57 @@ pre {
   overflow-x: auto;
 }
 
+pre code {
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+  word-break: normal;
+}
+
+.cmd-block {
+  position: relative;
+}
+
+.cmd-block pre {
+  padding-right: 80px;
+}
+
+#upgrade-body h1,
+#upgrade-body h2,
+#upgrade-body h3 {
+  font-size: 1.1rem;
+  margin: 1.2em 0 0.4em;
+  color: var(--text);
+}
+
+#upgrade-body h1:first-child,
+#upgrade-body h2:first-child,
+#upgrade-body h3:first-child {
+  margin-top: 0;
+}
+
+#upgrade-body ul,
+#upgrade-body ol {
+  padding-left: 1.4em;
+  margin: 0.4em 0;
+}
+
+#upgrade-body li {
+  margin: 0.3em 0;
+}
+
+#upgrade-body p {
+  margin: 0.4em 0;
+}
+
+.cmd-block .copy-btn {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+}
+
 .copy-btn {
   padding: 6px 12px;
   border-radius: 999px;
