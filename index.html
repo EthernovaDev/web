@@ -62,7 +62,7 @@
           <p class="eyebrow">EVM + GPU Mining</p>
           <h1>Ignite the supernova.</h1>
           <p class="tagline">Let's Make Great GPU Mining Again!!!</p>
-          <p class="muted">Mainnet release v1.2.7 - Chain ID / Network ID 121525.</p>
+          <p class="muted">Mainnet release <span id="latest-version">v1.3.0</span> - Chain ID / Network ID 121525.</p>
           <p class="lead">Ethernova (NOVA) is a CoreGeth-based, EVM-compatible chain built for miners, builders, and explorers of the next DeFi frontier.</p>
           <div class="cta-row">
             <a class="btn primary" href="https://explorer.ethnova.net" target="_blank" rel="noopener">Open Explorer</a>
@@ -90,10 +90,6 @@
               <div>
                 <span>Ticker</span>
                 <strong>NOVA</strong>
-              </div>
-              <div>
-                <span>Pool ID</span>
-                <strong>nova1</strong>
               </div>
             </div>
           </div>
@@ -203,13 +199,6 @@
               <button class="copy-btn" type="button" data-copy="Ethhash" aria-label="Copy algorithm">Copy</button>
             </div>
           </div>
-          <div class="info-row">
-            <span class="label">Pool ID</span>
-            <div class="value-group">
-              <code>nova1</code>
-              <button class="copy-btn" type="button" data-copy="nova1" aria-label="Copy pool ID">Copy</button>
-            </div>
-          </div>
         </div>
       </div>
     </section>
@@ -218,22 +207,29 @@
       <div class="container">
         <div class="section-header">
           <h2>Mining Pool</h2>
-          <p>Connect your miner to the NOVA pool with the details below.</p>
+          <p>Connect your miner to the Orion Mining Pool with the details below.</p>
         </div>
         <div class="grid-2">
           <div class="glass-card stack">
             <div class="info-row">
               <span class="label">Pool Dashboard</span>
               <div class="value-group">
-                <code>https://pool.ethnova.net/</code>
-                <button class="copy-btn" type="button" data-copy="https://pool.ethnova.net/" aria-label="Copy pool dashboard URL">Copy</button>
+                <code>https://orionpool.net/</code>
+                <button class="copy-btn" type="button" data-copy="https://orionpool.net/" aria-label="Copy pool dashboard URL">Copy</button>
               </div>
             </div>
             <div class="info-row">
-              <span class="label">Stratum</span>
+              <span class="label">Pool Stratum</span>
               <div class="value-group">
-                <code>stratum+tcp://89.117.150.207:4073</code>
-                <button class="copy-btn" type="button" data-copy="stratum+tcp://89.117.150.207:4073" aria-label="Copy stratum endpoint">Copy</button>
+                <code>stratum+tcp://orionpool.net:3391</code>
+                <button class="copy-btn" type="button" data-copy="stratum+tcp://orionpool.net:3391" aria-label="Copy pool stratum endpoint">Copy</button>
+              </div>
+            </div>
+            <div class="info-row">
+              <span class="label">Solo Stratum</span>
+              <div class="value-group">
+                <code>stratum+tcp://orionpool.net:3392</code>
+                <button class="copy-btn" type="button" data-copy="stratum+tcp://orionpool.net:3392" aria-label="Copy solo stratum endpoint">Copy</button>
               </div>
             </div>
             <div class="info-row">
@@ -243,27 +239,27 @@
                 <button class="copy-btn" type="button" data-copy="2%" aria-label="Copy pool fee">Copy</button>
               </div>
             </div>
-            <div class="info-row">
-              <span class="label">Minimum Payout</span>
-              <div class="value-group">
-                <code>0.01 NOVA</code>
-                <button class="copy-btn" type="button" data-copy="0.01 NOVA" aria-label="Copy minimum payout">Copy</button>
-              </div>
-            </div>
           </div>
           <div class="glass-card stack">
             <div class="info-row">
-              <span class="label">Pool ID</span>
+              <span class="label">Pool Command</span>
               <div class="value-group">
-                <code>nova1</code>
-                <button class="copy-btn" type="button" data-copy="nova1" aria-label="Copy pool ID">Copy</button>
+                <code>stratum+tcp://orionpool.net:3391 -u YOUR_WALLET.WORKER -p x</code>
+                <button class="copy-btn" type="button" data-copy="stratum+tcp://orionpool.net:3391 -u YOUR_WALLET.WORKER -p x" aria-label="Copy pool command">Copy</button>
+              </div>
+            </div>
+            <div class="info-row">
+              <span class="label">Solo Command</span>
+              <div class="value-group">
+                <code>stratum+tcp://orionpool.net:3392 -u YOUR_WALLET.WORKER -p x</code>
+                <button class="copy-btn" type="button" data-copy="stratum+tcp://orionpool.net:3392 -u YOUR_WALLET.WORKER -p x" aria-label="Copy solo command">Copy</button>
               </div>
             </div>
             <div class="info-row">
               <span class="label">Wallet Format</span>
               <div class="value-group">
-                <code>0xYOUR_WALLET.rig1</code>
-                <button class="copy-btn" type="button" data-copy="0xYOUR_WALLET.rig1" aria-label="Copy wallet format">Copy</button>
+                <code>YOUR_WALLET.WORKER</code>
+                <button class="copy-btn" type="button" data-copy="YOUR_WALLET.WORKER" aria-label="Copy wallet format">Copy</button>
               </div>
             </div>
             <div class="info-row">
@@ -271,13 +267,6 @@
               <div class="value-group">
                 <code>x</code>
                 <button class="copy-btn" type="button" data-copy="x" aria-label="Copy password">Copy</button>
-              </div>
-            </div>
-            <div class="info-row">
-              <span class="label">Pool Status</span>
-              <div class="value-group">
-                <code>LIVE</code>
-                <button class="copy-btn" type="button" data-copy="LIVE" aria-label="Copy pool status">Copy</button>
               </div>
             </div>
           </div>
@@ -333,22 +322,12 @@
       <div class="container">
         <div class="section-header">
           <h2>Bootnodes</h2>
-          <p>Use these enodes to connect your peers during bootstrap.</p>
+          <p>Track live node status and peer connectivity on the Node Explorer.</p>
         </div>
-        <div class="glass-card stack">
-          <div class="info-row">
-            <span class="label">Bootnode 1</span>
-            <div class="value-group">
-                <code>enode://3d29733de3a9fcde5841f3550e245655895a63550a712fabf4bd4d03feaa133cc329de58cbccdfd3787d94defc62625e63887a1a79436986e2265f2fa8483a1c@207.180.230.125:30303</code>
-                <button class="copy-btn" type="button" data-copy="enode://3d29733de3a9fcde5841f3550e245655895a63550a712fabf4bd4d03feaa133cc329de58cbccdfd3787d94defc62625e63887a1a79436986e2265f2fa8483a1c@207.180.230.125:30303" aria-label="Copy bootnode 1">Copy</button>
-            </div>
-          </div>
-          <div class="info-row">
-            <span class="label">Bootnode 2</span>
-            <div class="value-group">
-                <code>enode://5111e4b4dd027d4801f4cbf05fafa203db145adce266cb9b561ebd1a4637833c468dfdc8e29aba6ba1f51390179ec3c062b9af2447e17f7fc4123df39e1ad2da@89.117.150.207:30303</code>
-                <button class="copy-btn" type="button" data-copy="enode://5111e4b4dd027d4801f4cbf05fafa203db145adce266cb9b561ebd1a4637833c468dfdc8e29aba6ba1f51390179ec3c062b9af2447e17f7fc4123df39e1ad2da@89.117.150.207:30303" aria-label="Copy bootnode 2">Copy</button>
-            </div>
+        <div class="glass-card">
+          <p>The Node Explorer provides real-time visibility into active nodes, peer connections, and network health.</p>
+          <div class="cta-row">
+            <a class="btn primary" href="https://nodeexplorer.ethnova.net/" target="_blank" rel="noopener">Open Node Explorer</a>
           </div>
         </div>
       </div>
@@ -432,33 +411,16 @@
     <section id="upgrade" class="section">
       <div class="container">
         <div class="section-header">
-          <h2>Mainnet Upgrade (v1.2.7, No Chain Reset)</h2>
-          <p>Upgrade with the v1.2.7 scripts below. Do not reset your chain.</p>
+          <h2>Latest Release (<span id="upgrade-version">v1.3.0</span>)</h2>
+          <p>Download the latest release from GitHub.</p>
         </div>
-        <div class="glass-card">
-          <h3>What's new in v1.2.7</h3>
-          <ul class="clean-list">
-            <li>Chain ID / Network ID updated to 121525 for mainnet.</li>
-            <li>Network stats supply now includes the legacy migration baseline.</li>
-            <li>Ethash epoch and DAG size info added to Network Stats.</li>
-          </ul>
+        <div class="glass-card" id="upgrade-notes">
+          <h3>What's new in <span class="release-version">v1.3.0</span></h3>
+          <p id="upgrade-body">Loading release notes...</p>
         </div>
-        <div class="grid-2">
-          <div class="glass-card">
-            <h3>Windows</h3>
-            <pre><code>scripts\apply-upgrade-mainnet.bat</code></pre>
-          </div>
-          <div class="glass-card">
-            <h3>Linux</h3>
-            <pre><code>./scripts/apply-upgrade-mainnet.sh</code></pre>
-          </div>
-        </div>
-        <div class="glass-card stack">
-          <h3>Behind the scenes</h3>
-          <pre><code>ethernova --datadir &lt;your-datadir&gt; init genesis-upgrade-60000.json</code></pre>
-          <div class="warning">
-            <strong>Warning:</strong> Do NOT replace the genesis inside your datadir. Init updates the stored chain config while preserving the genesis hash.
-          </div>
+        <div class="cta-row">
+          <a class="btn primary" id="upgrade-download" href="https://github.com/EthernovaDev/ethernova-coregeth/releases/latest" target="_blank" rel="noopener">Download from GitHub</a>
+          <a class="btn secondary" href="https://github.com/EthernovaDev/ethernova-coregeth/releases" target="_blank" rel="noopener">All Releases</a>
         </div>
       </div>
     </section>

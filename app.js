@@ -1,5 +1,38 @@
 ﻿const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+// Auto-fetch latest release from GitHub
+(async () => {
+  try {
+    const res = await fetch("https://api.github.com/repos/EthernovaDev/ethernova-coregeth/releases/latest");
+    if (!res.ok) return;
+    const data = await res.json();
+    const tag = data.tag_name;
+    if (!tag) return;
+
+    const heroVersion = document.getElementById("latest-version");
+    if (heroVersion) heroVersion.textContent = tag;
+
+    const upgradeVersion = document.getElementById("upgrade-version");
+    if (upgradeVersion) upgradeVersion.textContent = tag;
+
+    document.querySelectorAll(".release-version").forEach((el) => {
+      el.textContent = tag;
+    });
+
+    const upgradeBody = document.getElementById("upgrade-body");
+    if (upgradeBody && data.body) {
+      upgradeBody.textContent = data.body;
+    }
+
+    const downloadLink = document.getElementById("upgrade-download");
+    if (downloadLink && data.html_url) {
+      downloadLink.href = data.html_url;
+    }
+  } catch (_) {
+    // Fallback to hardcoded version
+  }
+})();
+
 const header = document.querySelector(".site-header");
 const navToggle = document.querySelector(".nav-toggle");
 const navLinks = document.querySelectorAll(".nav-links a[data-scroll]");
