@@ -1,11 +1,65 @@
 ﻿const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+// Simple markdown to HTML converter for release notes
+const renderMarkdown = (md) => {
+  const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const lines = md.split("\n");
+  let html = "";
+  let inList = false;
+
+  for (const raw of lines) {
+    const line = raw.trimEnd();
+
+    // Close list if current line is not a list item
+    if (inList && !/^\s*-\s/.test(line)) {
+      html += "</ul>";
+      inList = false;
+    }
+
+    // Blank line
+    if (!line.trim()) {
+      html += "";
+      continue;
+    }
+
+    // Headings
+    const headingMatch = line.match(/^(#{1,3})\s+(.*)/);
+    if (headingMatch) {
+      const level = headingMatch[1].length;
+      html += `<h${level}>${inline(esc(headingMatch[2]))}</h${level}>`;
+      continue;
+    }
+
+    // List items
+    const listMatch = line.match(/^\s*-\s+(.*)/);
+    if (listMatch) {
+      if (!inList) {
+        html += "<ul>";
+        inList = true;
+      }
+      html += `<li>${inline(esc(listMatch[1]))}</li>`;
+      continue;
+    }
+
+    // Regular paragraph
+    html += `<p>${inline(esc(line))}</p>`;
+  }
+
+  if (inList) html += "</ul>";
+  return html;
+};
+
+// Inline formatting: bold, code, links
+const inline = (s) =>
+  s
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+
 // Auto-fetch latest release from GitHub
 (async () => {
   try {
-    const res = await fetch("https://api.github.com/repos/EthernovaDev/ethernova-coregeth/releases/latest", {
-      headers: { Accept: "application/vnd.github.html+json" },
-    });
+    const res = await fetch("https://api.github.com/repos/EthernovaDev/ethernova-coregeth/releases/latest");
     if (!res.ok) return;
     const data = await res.json();
     const tag = data.tag_name;
@@ -22,8 +76,8 @@
     });
 
     const upgradeBody = document.getElementById("upgrade-body");
-    if (upgradeBody && data.body_html) {
-      upgradeBody.innerHTML = data.body_html;
+    if (upgradeBody && data.body) {
+      upgradeBody.innerHTML = renderMarkdown(data.body);
     }
 
     const downloadLink = document.getElementById("upgrade-download");
