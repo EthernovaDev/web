@@ -308,7 +308,7 @@ if (starfield) {
   try {
     const [gateviaRes, klingexRes, statsRes] = await Promise.all([
       fetch("https://api.gatevia.io/public/markets/NOVA_USDT/tickers").catch(() => null),
-      fetch("https://api.klingex.io/api/tickers").catch(() => null),
+      fetch("https://api.ethnova.net/klingex.json").catch(() => null),
       fetch("https://api.ethnova.net/stats.json").catch(() => null),
     ]);
 
@@ -326,9 +326,8 @@ if (starfield) {
 
     // KlingEx
     if (klingexRes && klingexRes.ok) {
-      const tickers = await klingexRes.json();
-      const nova = tickers.find((t) => t.ticker_id === "NOVA_USDT");
-      if (nova) {
+      const nova = await klingexRes.json();
+      if (nova && nova.ticker_id === "NOVA_USDT") {
         const last = parseFloat(nova.last_price);
         const vol = parseFloat(nova.base_volume);
         if (last > 0) prices.push(last);
