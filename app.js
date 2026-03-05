@@ -297,62 +297,69 @@ if (starfield) {
   });
 }
 
-// Fetch NOVA price from Gatevia + supply from stats API
+// Fetch NOVA price from Gatevia + KlingEx + supply from stats API
 (async () => {
+  const priceEl = document.getElementById("nova-price");
+  const volumeEl = document.getElementById("nova-volume");
+  const mcapEl = document.getElementById("nova-mcap");
+  if (!priceEl) return;
+
+  const dash = "—";
   try {
-    const [tickerRes, statsRes] = await Promise.all([
-      fetch("https://api.gatevia.io/public/markets/NOVA_USDT/tickers"),
-      fetch("https://api.ethnova.net/stats.json"),
+    const [gateviaRes, klingexRes, statsRes] = await Promise.all([
+      fetch("https://api.gatevia.io/public/markets/NOVA_USDT/tickers").catch(() => null),
+      fetch("https://api.klingex.io/api/tickers").catch(() => null),
+      fetch("https://api.ethnova.net/stats.json").catch(() => null),
     ]);
 
-    const priceEl = document.getElementById("nova-price");
-    const volumeEl = document.getElementById("nova-volume");
-    const mcapEl = document.getElementById("nova-mcap");
+    let prices = [];
+    let totalVolume = 0;
 
-    if (!priceEl) return;
-
-    let price = null;
-    let volume = null;
-
-    if (tickerRes.ok) {
-      const ticker = await tickerRes.json();
-      const last = parseFloat(ticker?.ticker?.last);
-      const vol = parseFloat(ticker?.ticker?.volume);
-      if (last > 0) {
-        price = last;
-        priceEl.textContent = "$" + last.toFixed(8);
-      } else {
-        priceEl.textContent = "—";
-      }
-      if (vol > 0) {
-        volume = vol;
-        volumeEl.textContent = vol.toLocaleString(undefined, { maximumFractionDigits: 2 }) + " NOVA";
-      } else {
-        volumeEl.textContent = "—";
-      }
-    } else {
-      priceEl.textContent = "—";
-      volumeEl.textContent = "—";
+    // Gatevia
+    if (gateviaRes && gateviaRes.ok) {
+      const g = await gateviaRes.json();
+      const last = parseFloat(g?.ticker?.last);
+      const vol = parseFloat(g?.ticker?.volume);
+      if (last > 0) prices.push(last);
+      if (vol > 0) totalVolume += vol;
     }
 
-    if (statsRes.ok && price) {
+    // KlingEx
+    if (klingexRes && klingexRes.ok) {
+      const tickers = await klingexRes.json();
+      const nova = tickers.find((t) => t.ticker_id === "NOVA_USDT");
+      if (nova) {
+        const last = parseFloat(nova.last_price);
+        const vol = parseFloat(nova.base_volume);
+        if (last > 0) prices.push(last);
+        if (vol > 0) totalVolume += vol;
+      }
+    }
+
+    // Best price (average of available exchanges)
+    const price = prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : null;
+
+    priceEl.textContent = price ? "$" + price.toFixed(8) : dash;
+    volumeEl.textContent = totalVolume > 0
+      ? totalVolume.toLocaleString(undefined, { maximumFractionDigits: 2 }) + " NOVA"
+      : dash;
+
+    // Market cap
+    if (price && statsRes && statsRes.ok) {
       const stats = await statsRes.json();
       const supply = parseFloat(stats?.minedCoins);
       if (supply > 0) {
         const mcap = price * supply;
         mcapEl.textContent = "$" + mcap.toLocaleString(undefined, { maximumFractionDigits: 2 });
       } else {
-        mcapEl.textContent = "—";
+        mcapEl.textContent = dash;
       }
     } else {
-      mcapEl.textContent = "—";
+      mcapEl.textContent = dash;
     }
   } catch (_) {
-    const priceEl = document.getElementById("nova-price");
-    if (priceEl) priceEl.textContent = "—";
-    const volumeEl = document.getElementById("nova-volume");
-    if (volumeEl) volumeEl.textContent = "—";
-    const mcapEl = document.getElementById("nova-mcap");
-    if (mcapEl) mcapEl.textContent = "—";
+    priceEl.textContent = dash;
+    volumeEl.textContent = dash;
+    mcapEl.textContent = dash;
   }
 })();
