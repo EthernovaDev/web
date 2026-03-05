@@ -296,3 +296,63 @@ if (starfield) {
     }
   });
 }
+
+// Fetch NOVA price from Gatevia + supply from stats API
+(async () => {
+  try {
+    const [tickerRes, statsRes] = await Promise.all([
+      fetch("https://api.gatevia.io/public/markets/NOVA_USDT/tickers"),
+      fetch("https://api.ethnova.net/stats.json"),
+    ]);
+
+    const priceEl = document.getElementById("nova-price");
+    const volumeEl = document.getElementById("nova-volume");
+    const mcapEl = document.getElementById("nova-mcap");
+
+    if (!priceEl) return;
+
+    let price = null;
+    let volume = null;
+
+    if (tickerRes.ok) {
+      const ticker = await tickerRes.json();
+      const last = parseFloat(ticker?.ticker?.last);
+      const vol = parseFloat(ticker?.ticker?.volume);
+      if (last > 0) {
+        price = last;
+        priceEl.textContent = "$" + last.toFixed(8);
+      } else {
+        priceEl.textContent = "—";
+      }
+      if (vol > 0) {
+        volume = vol;
+        volumeEl.textContent = vol.toLocaleString(undefined, { maximumFractionDigits: 2 }) + " NOVA";
+      } else {
+        volumeEl.textContent = "—";
+      }
+    } else {
+      priceEl.textContent = "—";
+      volumeEl.textContent = "—";
+    }
+
+    if (statsRes.ok && price) {
+      const stats = await statsRes.json();
+      const supply = parseFloat(stats?.minedCoins);
+      if (supply > 0) {
+        const mcap = price * supply;
+        mcapEl.textContent = "$" + mcap.toLocaleString(undefined, { maximumFractionDigits: 2 });
+      } else {
+        mcapEl.textContent = "—";
+      }
+    } else {
+      mcapEl.textContent = "—";
+    }
+  } catch (_) {
+    const priceEl = document.getElementById("nova-price");
+    if (priceEl) priceEl.textContent = "—";
+    const volumeEl = document.getElementById("nova-volume");
+    if (volumeEl) volumeEl.textContent = "—";
+    const mcapEl = document.getElementById("nova-mcap");
+    if (mcapEl) mcapEl.textContent = "—";
+  }
+})();
