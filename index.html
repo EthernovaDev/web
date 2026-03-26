@@ -38,6 +38,7 @@
       <button class="nav-toggle" type="button" aria-controls="primary-nav" aria-expanded="false">Menu</button>
       <nav id="primary-nav" class="nav-links" aria-label="Primary">
         <a href="#vision" data-scroll>Vision</a>
+        <a href="#nova2" data-scroll>Nova 2.0</a>
         <a href="#network" data-scroll>Network</a>
         <a href="#mining" data-scroll>Mining</a>
         <a href="#exchanges" data-scroll>Exchanges</a>
@@ -137,6 +138,114 @@
           <div class="glass-card">
             <h3>Community First</h3>
             <p>NOVA is focused on miners and builders who want transparency, predictable economics, and a chain that values mining accessibility.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="nova2" class="section">
+      <div class="container">
+        <div class="section-header">
+          <h2>Nova 2.0 &mdash; The Noven Fork</h2>
+          <p>24 phases of protocol-level innovation. Solving Ethereum's biggest problems. Tested on a live devnet. Coming to mainnet.</p>
+        </div>
+
+        <div class="grid-3">
+          <div class="glass-card">
+            <h3>&#x1F6E1; Native Security</h3>
+            <p><strong>Anti-Reentrancy</strong> built into the EVM. No more DAO hacks, no more Curve exploits. Every contract is protected by default.</p>
+            <p><strong>Gas Refund on Revert</strong> &mdash; failed transactions return 90% of gas. On Ethereum you lose everything.</p>
+          </div>
+          <div class="glass-card">
+            <h3>&#x2696; Anti-MEV</h3>
+            <p>Transactions ordered by arrival time, not gas price. <strong>No front-running. No sandwich attacks.</strong> Fair for every user.</p>
+            <p>Rate limiting prevents mempool spam. Miners cannot reorder for profit.</p>
+          </div>
+          <div class="glass-card">
+            <h3>&#x267B; State Expiry</h3>
+            <p>The blockchain garbage collector. Dead contracts automatically archived after 1,000 blocks. <strong>Keeps the chain lean forever.</strong></p>
+            <p>Your wallet is NEVER expired. Only abandoned contracts get cleaned up.</p>
+          </div>
+        </div>
+
+        <div class="grid-3" style="margin-top:1.5rem">
+          <div class="glass-card">
+            <h3>&#x1FA99; Native Tokens</h3>
+            <p>Tokens as protocol objects &mdash; no ERC-20 contracts needed. <strong>10x cheaper transfers.</strong> No approve+transfer phishing pattern.</p>
+          </div>
+          <div class="glass-card">
+            <h3>&#x1F510; Optional Privacy</h3>
+            <p>Shielded pool for private NOVA transfers. <strong>Your choice when to be private.</strong> Not forced like Monero. Native in protocol.</p>
+          </div>
+          <div class="glass-card">
+            <h3>&#x1F4CA; Native Oracle</h3>
+            <p>Protocol-level price feeds with TWAP. No Chainlink dependency. <strong>Circuit breaker blocks manipulation.</strong></p>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-top:1.5rem">
+          <div class="glass-card">
+            <h3>&#x1F4E6; Account Abstraction</h3>
+            <p><strong>Smart Wallets</strong> with guardian recovery and key rotation. Lost your keys? Guardians recover your account.</p>
+            <p><strong>Tempo Transactions</strong> &mdash; atomic batching (approve + swap in ONE tx), fee delegation (DApps pay gas for you), and scheduled transactions.</p>
+            <p><strong>Frame AA</strong> &mdash; smart contract wallets validate transactions. Supports passkeys, multisig, and quantum-resistant signatures.</p>
+          </div>
+          <div class="glass-card">
+            <h3>&#x1F4CB; By The Numbers</h3>
+            <div class="stack">
+              <div class="info-row"><span class="label">Phases completed</span><div class="value-group"><code>24</code></div></div>
+              <div class="info-row"><span class="label">Custom precompiles</span><div class="value-group"><code>9 (0x20-0x28)</code></div></div>
+              <div class="info-row"><span class="label">Security audit</span><div class="value-group"><code>11 issues found, 11 fixed</code></div></div>
+              <div class="info-row"><span class="label">Consensus bugs caught</span><div class="value-group"><code>4 (all before mainnet)</code></div></div>
+              <div class="info-row"><span class="label">Test suite</span><div class="value-group"><code>35/35 PASSED</code></div></div>
+              <div class="info-row"><span class="label">Max txs in 1 block</span><div class="value-group"><code>117</code></div></div>
+              <div class="info-row"><span class="label">BAD BLOCK errors</span><div class="value-group"><code>ZERO</code></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card" style="margin-top:1.5rem">
+          <h3>Ethernova vs Ethereum</h3>
+          <div class="stack">
+            <div class="info-row"><span class="label">State bloat (200GB+)</span><div class="value-group"><code>Ethereum: Unsolved since 2017 &#x274C; &nbsp;|&nbsp; Ethernova: State Expiry garbage collector &#x2705;</code></div></div>
+            <div class="info-row"><span class="label">MEV / Front-running</span><div class="value-group"><code>Ethereum: $600M+ extracted &#x274C; &nbsp;|&nbsp; Ethernova: Fair FIFO ordering &#x2705;</code></div></div>
+            <div class="info-row"><span class="label">Reentrancy attacks</span><div class="value-group"><code>Ethereum: Billions lost &#x274C; &nbsp;|&nbsp; Ethernova: Native EVM protection &#x2705;</code></div></div>
+            <div class="info-row"><span class="label">Failed tx = money lost</span><div class="value-group"><code>Ethereum: Pay full gas &#x274C; &nbsp;|&nbsp; Ethernova: 90% refund &#x2705;</code></div></div>
+            <div class="info-row"><span class="label">Privacy</span><div class="value-group"><code>Ethereum: None &#x274C; &nbsp;|&nbsp; Ethernova: Optional shielded pool &#x2705;</code></div></div>
+            <div class="info-row"><span class="label">Account abstraction</span><div class="value-group"><code>Ethereum: 9 years debating &#x274C; &nbsp;|&nbsp; Ethernova: Shipped &#x2705;</code></div></div>
+            <div class="info-row"><span class="label">Governance speed</span><div class="value-group"><code>Ethereum: 1-2 years/upgrade &#x274C; &nbsp;|&nbsp; Ethernova: Weeks &#x2705;</code></div></div>
+          </div>
+        </div>
+
+        <div class="glass-card" style="margin-top:1.5rem">
+          <h3>9 Custom Precompiles</h3>
+          <p>Protocol-level smart contracts not found on any other EVM chain:</p>
+          <div class="stack">
+            <div class="info-row"><span class="label">0x20</span><div class="value-group"><code>novaBatchHash &mdash; Batch keccak256 hashing (10x cheaper)</code></div></div>
+            <div class="info-row"><span class="label">0x21</span><div class="value-group"><code>novaBatchVerify &mdash; Batch signature verification</code></div></div>
+            <div class="info-row"><span class="label">0x22</span><div class="value-group"><code>novaAccountManager &mdash; Smart wallet recovery + key rotation</code></div></div>
+            <div class="info-row"><span class="label">0x23</span><div class="value-group"><code>novaFrameApprove &mdash; Smart contract tx validation</code></div></div>
+            <div class="info-row"><span class="label">0x24</span><div class="value-group"><code>novaFrameIntrospect &mdash; Cross-frame conditional logic</code></div></div>
+            <div class="info-row"><span class="label">0x25</span><div class="value-group"><code>novaTokenManager &mdash; Native multi-token support</code></div></div>
+            <div class="info-row"><span class="label">0x26</span><div class="value-group"><code>novaShieldedPool &mdash; Optional privacy transfers</code></div></div>
+            <div class="info-row"><span class="label">0x27</span><div class="value-group"><code>novaContractUpgrade &mdash; Safe upgrades with timelock</code></div></div>
+            <div class="info-row"><span class="label">0x28</span><div class="value-group"><code>novaOracle &mdash; Protocol-level price oracle with TWAP</code></div></div>
+          </div>
+        </div>
+
+        <div class="glass-card" style="margin-top:1.5rem">
+          <h3>Try the Devnet Now</h3>
+          <p>All features are live on the public devnet. Connect your wallet and test everything.</p>
+          <div class="stack">
+            <div class="info-row"><span class="label">Explorer</span><div class="value-group"><code>https://devexplorer.ethnova.net</code><button class="copy-btn" type="button" data-copy="https://devexplorer.ethnova.net" aria-label="Copy devnet explorer">Copy</button></div></div>
+            <div class="info-row"><span class="label">RPC</span><div class="value-group"><code>https://devrpc.ethnova.net</code><button class="copy-btn" type="button" data-copy="https://devrpc.ethnova.net" aria-label="Copy devnet RPC">Copy</button></div></div>
+            <div class="info-row"><span class="label">Faucet</span><div class="value-group"><code>https://faucet.ethnova.net</code><button class="copy-btn" type="button" data-copy="https://faucet.ethnova.net" aria-label="Copy devnet faucet">Copy</button></div></div>
+            <div class="info-row"><span class="label">Chain ID</span><div class="value-group"><code>121526</code><button class="copy-btn" type="button" data-copy="121526" aria-label="Copy devnet chain ID">Copy</button></div></div>
+          </div>
+          <div class="cta-row" style="margin-top:1rem">
+            <a class="btn primary" href="https://devexplorer.ethnova.net" target="_blank" rel="noopener">Open Devnet Explorer</a>
+            <a class="btn secondary" href="https://faucet.ethnova.net" target="_blank" rel="noopener">Get Free Test NOVA</a>
+            <a class="btn ghost" href="https://github.com/EthernovaDev/ethernova-devnet" target="_blank" rel="noopener">View Source Code</a>
           </div>
         </div>
       </div>
@@ -426,17 +535,17 @@
           <p>Short, focused milestones to harden the chain and grow the ecosystem.</p>
         </div>
         <div class="grid-3">
-          <div class="glass-card">
-            <h3>Phase 1: Stabilize</h3>
-            <p>Expand public nodes, harden P2P connectivity, and onboard more pool operators.</p>
+          <div class="glass-card glow-border">
+            <h3>&#x2705; Devnet Complete</h3>
+            <p>24 phases shipped: EVM profiling, adaptive gas, execution modes, state expiry, account abstraction, privacy, native tokens, oracle, anti-MEV, anti-reentrancy. 35/35 tests passed. 4 consensus bugs caught and fixed before mainnet.</p>
           </div>
           <div class="glass-card">
-            <h3>Phase 2: Builders</h3>
-            <p>Launch docs, tooling, and starter smart contracts for DeFi and NFT builders.</p>
+            <h3>&#x1F525; Noven Fork (Next)</h3>
+            <p>All 24 phases activated on mainnet via the Noven Fork. One block, every feature, no chain reset. Named after community developer Noven who contributed key security fixes.</p>
           </div>
           <div class="glass-card">
-            <h3>Phase 3: Growth</h3>
-            <p>Scale infrastructure, launch community grants, and push multi-region redundancy.</p>
+            <h3>&#x1F680; Nova 2.0 Ecosystem</h3>
+            <p>DeFi protocols built on native tokens (no ERC-20), privacy-enabled DEX, smart wallet adoption, and cross-chain bridges. The most advanced PoW chain in existence.</p>
           </div>
         </div>
       </div>
@@ -560,7 +669,7 @@
       </div>
     </div>
     <div class="container footer-bottom">
-      <span>© 2025 Ethernova. All rights reserved.</span>
+      <span>© 2025-2026 Ethernova. All rights reserved. 24 phases. 9 precompiles. The most advanced PoW chain.</span>
     </div>
   </footer>
 
