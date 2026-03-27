@@ -779,3 +779,35 @@ pre code {
     transition-duration: 0.01ms !important;
   }
 }
+
+.partner-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 2rem;
+}
+
+.partner-logo {
+  width: 160px;
+  height: auto;
+  object-fit: contain;
+  flex-shrink: 0;
+  filter: brightness(1.1);
+}
+
+.partner-info {
+  flex: 1;
+}
+
+@media (max-width: 600px) {
+  .partner-card {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .partner-logo {
+    width: 120px;
+  }
+  .partner-info .info-row {
+    flex-wrap: wrap;
+  }
+}
