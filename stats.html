@@ -52,6 +52,22 @@
 
 <div class="wrap">
 
+  <!-- Noven Fork Countdown -->
+  <div class="card" id="novenForkCard" style="margin-bottom:14px;border-color:#a66bff;background:linear-gradient(135deg,rgba(166,107,255,.08),rgba(132,227,255,.05))">
+    <div class="row">
+      <div>
+        <div class="label" style="color:#a66bff">Noven Fork (v2.0.0)</div>
+        <div class="value" id="novenForkStatus">Loading...</div>
+        <div class="tiny" id="novenForkDetail">Block 480,000</div>
+      </div>
+      <div style="text-align:right">
+        <div class="label">Blocks Remaining</div>
+        <div class="value" id="novenForkRemaining">-</div>
+        <div class="tiny" id="novenForkEta">ETA: -</div>
+      </div>
+    </div>
+  </div>
+
   <div class="grid">
     <div class="card"><div class="label">Client Version</div><div class="value" id="clientVersion">-</div><div class="tiny" id="clientVersionFull">Full: -</div></div>
     <div class="card"><div class="label">Latest Block</div><div class="value" id="latestBlock">—</div><div class="tiny">Source: eth_blockNumber</div></div>
@@ -66,6 +82,18 @@
     <div class="card"><div class="label">Avg Difficulty (G)</div><div class="value" id="avgDifficulty">-</div><div class="tiny" id="avgDifficultyRaw">Raw: -</div></div>
     <div class="card"><div class="label">Latest Difficulty (G)</div><div class="value" id="latestDifficulty">-</div><div class="tiny" id="latestDifficultyRaw">Raw: -</div></div>
     <div class="card"><div class="label">Last Update</div><div class="value" id="updatedAt">-</div><div class="tiny">Auto refresh every 5 min</div></div>
+  </div>
+
+  <!-- Ethernova 2.0 Stats -->
+  <div class="grid" style="margin-top:14px">
+    <div class="card"><div class="label">Peers Connected</div><div class="value" id="peerCount">-</div><div class="tiny">P2P network peers</div></div>
+    <div class="card"><div class="label">Node Uptime</div><div class="value" id="nodeUptime">-</div><div class="tiny">Since last restart</div></div>
+    <div class="card"><div class="label">Memory Usage</div><div class="value" id="nodeMemory">-</div><div class="tiny">Node process RAM</div></div>
+    <div class="card"><div class="label">Execution Mode</div><div class="value" id="execMode">-</div><div class="tiny">Standard / Fast / Parallel</div></div>
+    <div class="card"><div class="label">Native Precompiles</div><div class="value" id="precompileCount">-</div><div class="tiny">Protocol-level contracts (0x20-0x28)</div></div>
+    <div class="card"><div class="label">Adaptive Gas</div><div class="value" id="adaptiveGasStatus">-</div><div class="tiny" id="adaptiveGasDetail">Discount / Penalty config</div></div>
+    <div class="card"><div class="label">Parallel Eligible</div><div class="value" id="parallelEligible">-</div><div class="tiny" id="parallelDetail">Txs that could run in parallel</div></div>
+    <div class="card"><div class="label">Sync Progress</div><div class="value" id="syncProgress">-</div><div class="tiny">Chain synchronization</div></div>
   </div>
 
   <div class="split">
@@ -640,8 +668,107 @@
     renderChart(window.__lastRange, window.__lastHist, selected);
   });
 
+  // ============================================================
+  // Ethernova 2.0 Stats (via ethernova_* RPC namespace)
+  // ============================================================
+  const NOVA_RPC = "https://rpc.ethnova.net";
+  const NOVEN_FORK_BLOCK = 480000;
+
+  async function novaRpc(method) {
+    try {
+      const res = await fetch(NOVA_RPC, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({jsonrpc:"2.0",method,params:[],id:1})
+      });
+      const data = await res.json();
+      return data.result;
+    } catch { return null; }
+  }
+
+  function formatUptime(seconds) {
+    if (!seconds || seconds <= 0) return "-";
+    const d = Math.floor(seconds / 86400);
+    const h = Math.floor((seconds % 86400) / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    if (d > 0) return d + "d " + h + "h";
+    if (h > 0) return h + "h " + m + "m";
+    return m + "m";
+  }
+
+  async function refreshNovaStats() {
+    // Node health
+    const health = await novaRpc("ethernova_nodeHealth");
+    if (health) {
+      $("peerCount").textContent = health.peerCount || 0;
+      $("nodeUptime").textContent = formatUptime(health.uptimeSeconds);
+      $("nodeMemory").textContent = health.memoryMB ? health.memoryMB + " MB" : "-";
+      $("syncProgress").textContent = health.syncing ? health.syncProgress + "%" : "Synced";
+
+      // Noven Fork countdown
+      const current = health.currentBlock || 0;
+      const remaining = Math.max(0, NOVEN_FORK_BLOCK - current);
+      const card = $("novenForkCard");
+
+      if (remaining <= 0) {
+        $("novenForkStatus").textContent = "ACTIVE";
+        $("novenForkRemaining").textContent = "0";
+        $("novenForkDetail").textContent = "Noven Fork is live! Adaptive gas, precompiles, and all v2.0 features active.";
+        $("novenForkEta").textContent = "Activated";
+        if (card) card.style.borderColor = "#30d158";
+      } else {
+        $("novenForkStatus").textContent = "Pending";
+        $("novenForkRemaining").textContent = remaining.toLocaleString();
+        $("novenForkDetail").textContent = "Current: " + current.toLocaleString() + " / Target: " + NOVEN_FORK_BLOCK.toLocaleString();
+        // ETA based on avg block time
+        const abt = parseFloat($("avgBlockTimeSec").textContent) || 11;
+        const etaSec = remaining * abt;
+        const etaDays = (etaSec / 86400).toFixed(1);
+        const etaDate = new Date(Date.now() + etaSec * 1000);
+        $("novenForkEta").textContent = "~" + etaDays + " days (" + etaDate.toISOString().slice(0,10) + ")";
+      }
+    }
+
+    // Adaptive gas
+    const gas = await novaRpc("ethernova_adaptiveGasV2");
+    if (gas) {
+      const forkActive = health && health.currentBlock >= NOVEN_FORK_BLOCK;
+      $("adaptiveGasStatus").textContent = forkActive ? "Active" : "Pending (block " + NOVEN_FORK_BLOCK.toLocaleString() + ")";
+      $("adaptiveGasDetail").textContent = "Max discount: -" + gas.maxDiscountPercent + "% | Max penalty: +" + gas.maxPenaltyPercent + "%";
+    }
+
+    // Execution mode
+    const mode = await novaRpc("ethernova_executionMode");
+    if (mode) {
+      $("execMode").textContent = (mode.mode || "standard").charAt(0).toUpperCase() + (mode.mode || "standard").slice(1);
+    }
+
+    // Precompiles
+    const precompiles = await novaRpc("ethernova_precompiles");
+    if (precompiles && Array.isArray(precompiles)) {
+      $("precompileCount").textContent = precompiles.length;
+    }
+
+    // Parallel stats
+    const parallel = await novaRpc("ethernova_parallelStats");
+    if (parallel) {
+      const total = parallel.totalClassified || 0;
+      const eligible = parallel.parallelEligible || 0;
+      if (total > 0) {
+        const pct = ((eligible / total) * 100).toFixed(1);
+        $("parallelEligible").textContent = pct + "%";
+        $("parallelDetail").textContent = eligible.toLocaleString() + " of " + total.toLocaleString() + " txs eligible | " + (parallel.conflictsDetected || 0) + " conflicts";
+      } else {
+        $("parallelEligible").textContent = "No data yet";
+        $("parallelDetail").textContent = "Stats accumulate as blocks are processed";
+      }
+    }
+  }
+
   refresh();
+  refreshNovaStats();
   setInterval(refresh, 5 * 60 * 1000);
+  setInterval(refreshNovaStats, 30 * 1000); // Nova stats every 30s (lightweight)
 
   window.addEventListener("resize", () => { if (chart) chart.resize(); });
 </script>
