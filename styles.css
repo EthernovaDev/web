@@ -169,7 +169,7 @@ img {
 }
 
 .hero {
-  padding: 120px 0 80px;
+  padding: 132px 0 92px;
 }
 
 .hero-grid {
@@ -207,7 +207,22 @@ img {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
+}
+
+.hero-support-links {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.hero-support-links a {
+  color: var(--neon-cyan);
+}
+
+.hero-support-links span {
+  opacity: 0.65;
+  margin: 0 6px;
 }
 
 .btn {
@@ -267,11 +282,11 @@ img {
 
 .glass-card {
   position: relative;
-  padding: 24px;
+  padding: 26px;
   border-radius: var(--radius);
-  background: var(--glass);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--shadow-glow);
+  background: rgba(10, 16, 34, 0.42);
+  border: 1px solid rgba(124, 145, 255, 0.16);
+  box-shadow: 0 10px 26px rgba(15, 24, 62, 0.24);
   backdrop-filter: blur(18px);
 }
 
@@ -451,12 +466,17 @@ img {
 }
 
 .section {
-  padding: 80px 0;
+  padding: 108px 0;
   scroll-margin-top: 100px;
 }
 
+.section + .section {
+  border-top: 1px solid rgba(124, 145, 255, 0.09);
+}
+
 .section-header {
-  margin-bottom: 32px;
+  margin-bottom: 42px;
+  max-width: 820px;
 }
 
 .section-header h2 {
@@ -471,12 +491,12 @@ img {
 
 .grid-2 {
   display: grid;
-  gap: 24px;
+  gap: 28px;
 }
 
 .grid-3 {
   display: grid;
-  gap: 24px;
+  gap: 28px;
 }
 
 .stack > * + * {
@@ -521,6 +541,42 @@ img {
 .docs-note {
   color: var(--muted);
   margin: 12px 0 0;
+}
+
+.technical-details {
+  border: 1px solid rgba(124, 145, 255, 0.22);
+  border-radius: 16px;
+  background: rgba(8, 12, 28, 0.56);
+  padding: 0;
+}
+
+.technical-details summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 18px 22px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.technical-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.technical-details summary::after {
+  content: "+";
+  float: right;
+  color: var(--neon-cyan);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.technical-details[open] summary::after {
+  content: "-";
+}
+
+.technical-details-body {
+  padding: 0 18px 18px;
+  border-top: 1px solid rgba(124, 145, 255, 0.15);
 }
 
 code,
