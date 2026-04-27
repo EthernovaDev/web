@@ -826,6 +826,25 @@ pre code {
   color: var(--muted);
 }
 
+.meta-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.meta-line span {
+  display: inline-flex;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(94, 243, 255, 0.22);
+  background: rgba(94, 243, 255, 0.08);
+  color: var(--neon-cyan);
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
 .warning {
   padding: 14px 16px;
   border-radius: 12px;
