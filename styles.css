@@ -176,13 +176,14 @@ img {
 }
 
 .hero-grid {
-  display: block;
-  max-width: 980px;
+  display: grid;
+  gap: 48px;
+  align-items: center;
 }
 
 .hero-text h1 {
-  max-width: 920px;
-  font-size: clamp(2.8rem, 5.4vw, 4.7rem);
+  max-width: 840px;
+  font-size: clamp(3rem, 6vw, 5.9rem);
   line-height: 0.98;
   letter-spacing: -0.04em;
   margin: 0 0 22px;
@@ -197,9 +198,10 @@ img {
 }
 
 .tagline {
-  max-width: 820px;
-  font-size: 1.28rem;
+  max-width: 720px;
+  font-size: clamp(1.12rem, 2vw, 1.45rem);
   font-weight: 600;
+  line-height: 1.45;
   margin: 0 0 18px;
 }
 
@@ -282,11 +284,73 @@ img {
   margin: 0 6px;
 }
 
+.hero-focus-card {
+  padding: 30px;
+  min-height: 420px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.hero-focus-card::after {
+  content: "";
+  position: absolute;
+  right: -64px;
+  top: -64px;
+  width: 180px;
+  height: 180px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(94, 243, 255, 0.34), transparent 68%);
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+.card-eyebrow {
+  margin: 0 0 18px;
+  color: var(--neon-cyan);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.hero-focus-card h2 {
+  margin: 0 0 22px;
+  font-size: clamp(1.65rem, 3vw, 2.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.hero-bullets {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+  color: var(--muted);
+}
+
+.hero-bullets li {
+  position: relative;
+  padding-left: 24px;
+}
+
+.hero-bullets li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.6em;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--neon-cyan);
+  box-shadow: 0 0 18px rgba(94, 243, 255, 0.8);
+}
+
 .proof-strip {
   display: grid;
   gap: 12px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  max-width: 760px;
   margin-top: 28px;
   padding-top: 20px;
   border-top: 1px solid rgba(124, 145, 255, 0.22);
@@ -848,7 +912,7 @@ pre code {
 
 @media (min-width: 900px) {
   .hero-grid {
-    display: block;
+    grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.72fr);
   }
 
   .grid-2 {
@@ -898,6 +962,14 @@ pre code {
 
   .hero {
     padding-top: 100px;
+  }
+
+  .hero-grid {
+    gap: 32px;
+  }
+
+  .hero-focus-card {
+    min-height: auto;
   }
 
   .proof-strip {
