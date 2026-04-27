@@ -54,9 +54,9 @@
     <section id="hero" class="hero">
       <div class="container hero-grid">
         <div class="hero-text">
-          <p class="eyebrow">Identity · Communication · Content · Ownership</p>
-          <h1>Human-first infrastructure for the next wave of ownership.</h1>
-          <p class="tagline">Ethernova (NOVA) is a POW-secured EVM network where identity, communication, and content ownership are native to the protocol.</p>
+          <p class="eyebrow"><span class="live-dot" aria-hidden="true"></span> Ethernova mainnet is live</p>
+          <h1>Not another coin site. A people layer for POW.</h1>
+          <p class="tagline">NOVA brings identity, messaging, content ownership, and builder primitives directly into an Ethhash-secured EVM chain.</p>
           <div class="cta-row">
             <a class="btn primary" href="https://explorer.ethnova.net" target="_blank" rel="noopener">Start on Explorer</a>
             <a class="btn ghost" href="/docs/" target="_blank" rel="noopener">Read Main Docs</a>
@@ -70,18 +70,18 @@
             <a href="/stats.html">Live Stats</a>
           </p>
         </div>
-        <aside class="hero-focus-card glass-card glow-border" aria-label="Ethernova network summary">
-          <p class="card-eyebrow">Mainnet <span id="latest-version">v2.0.0</span></p>
-          <h2>One chain. People-first primitives.</h2>
-          <ul class="hero-bullets">
-            <li>On-chain identity and reputation</li>
-            <li>Private messaging and content ownership</li>
-            <li>9 protocol-level precompiles for builders</li>
-          </ul>
-          <div class="proof-strip" aria-label="Network facts">
+        <aside class="hero-visual" aria-label="Ethernova network summary">
+          <div class="nova-orb">
+            <span>NOVA</span>
+            <small>Mainnet <span id="latest-version">v2.0.0</span></small>
+          </div>
+          <div class="orbit-chip chip-identity">Identity</div>
+          <div class="orbit-chip chip-message">Messaging</div>
+          <div class="orbit-chip chip-content">Ownership</div>
+          <div class="hero-proof-row" aria-label="Network facts">
             <div><span>Network</span><strong>121525</strong></div>
             <div><span>Consensus</span><strong>Ethhash POW</strong></div>
-            <div><span>Fork</span><strong>Noven v2.0</strong></div>
+            <div><span>Precompiles</span><strong>9 Native</strong></div>
           </div>
         </aside>
       </div>
@@ -121,16 +121,20 @@
       <div class="container">
         <div class="section-header">
           <h2>Vision</h2>
-          <p>Bringing back the golden age of profitable, community-driven POW mining - and powering it with a full EVM ecosystem.</p>
+          <p>The current devnet is where Ethernova becomes more than an EVM chain: protocol-native identity, content, messaging, and app primitives tested before they touch mainnet.</p>
         </div>
-        <div class="grid-2">
+        <div class="grid-3">
           <div class="glass-card">
-            <h3>EVM Ecosystem</h3>
-            <p>Build NFTs, tokens (ERC-20 style), DeFi apps (DEX, liquidity, farming, lending), and smart contracts on a miner-first chain.</p>
+            <h3>NIP-0004 Devnet Track</h3>
+            <p>Phase 1 and Phase 2 added Protocol Objects and a deferred execution queue. Phase 3 now adds content references with rent-backed expiry.</p>
           </div>
           <div class="glass-card">
-            <h3>Community First</h3>
-            <p>NOVA is focused on miners and builders who want transparency, predictable economics, and a chain that values mining accessibility.</p>
+            <h3>Content Ownership Primitive</h3>
+            <p>The devnet now tests <code>novaContentRegistry</code> at <code>0x2B</code>: create, lookup, verify, paginate, and expire content references deterministically.</p>
+          </div>
+          <div class="glass-card">
+            <h3>Mailbox Is Next</h3>
+            <p>Phase 4 is the mailbox primitive: on-chain mailbox lifecycle, deferred message delivery, anti-spam rules, and an end-to-end Alice-to-Bob test path.</p>
           </div>
         </div>
       </div>
@@ -563,20 +567,20 @@
       <div class="container">
         <div class="section-header">
           <h2>Roadmap</h2>
-          <p>Short, focused milestones to harden the chain and grow the ecosystem.</p>
+          <p>Short, focused milestones for the active NIP-0004 devnet track.</p>
         </div>
         <div class="grid-3">
           <div class="glass-card glow-border">
-            <h3>&#x2705; Devnet Complete</h3>
-            <p>24 phases shipped: EVM profiling, adaptive gas, execution modes, state expiry, account abstraction, privacy, native tokens, oracle, anti-MEV, anti-reentrancy. 53/53 tests passed. 5 consensus bugs caught and fixed before mainnet.</p>
+            <h3>Phase 3: Content References</h3>
+            <p><code>novaContentRegistry</code> is live in devnet testing at <code>0x2B</code>, with content lookup, verification, pagination, rent deduction, and expiry behavior covered by validation scripts.</p>
           </div>
           <div class="glass-card glow-border">
-            <h3>&#x1F525; Noven Fork (v2.0.0 &mdash; LIVE)</h3>
-            <p>All 24 phases activated on mainnet at block 480,000 via the Noven Fork. 7,675 lines of code, 40 files, zero chain reset. Named after community developer Noven who built the adaptive gas system and contributed critical consensus fixes.</p>
+            <h3>Operator Verification</h3>
+            <p>Run Phase 3 across upgraded nodes, target 500+ blocks, confirm zero BAD BLOCK, and keep Linux/Windows state roots identical before moving forward.</p>
           </div>
           <div class="glass-card">
-            <h3>&#x1F680; Nova 2.0 Ecosystem</h3>
-            <p>DeFi protocols built on native tokens (no ERC-20), privacy-enabled DEX, smart wallet adoption, and cross-chain bridges. The most advanced PoW chain in existence.</p>
+            <h3>Phase 4: Mailbox Primitive</h3>
+            <p>Build the mailbox manager at <code>0x2C</code>, wire deferred delivery through Phase 2, then test lifecycle, message delivery, anti-spam, and stress scenarios.</p>
           </div>
         </div>
       </div>
